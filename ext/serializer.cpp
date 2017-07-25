@@ -123,7 +123,7 @@ void serializer_init(void *serializer, int protocol, void *str_arg1,
 #define catch_thrift_and_reraise()                                             \
   }                                                                            \
   catch (::apache::thrift::TException e) {                                     \
-    rb_raise(SparsamNativeError, e.what());                                    \
+    rb_raise(SparsamNativeError, "%s", e.what());                              \
     return Qnil;                                                               \
   }
 
