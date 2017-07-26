@@ -2,9 +2,10 @@ language: ruby
 sudo: enabled
 dist: trusty
 before_install:
-  - sudo add-apt-repository ppa:boost-latest/ppa -y && sudo apt-get update
+  - sudo apt-get update
   - sudo apt-get install automake bison flex g++ git libboost1.55-all-dev libevent-dev libssl-dev libtool make pkg-config -y
-  - sudo apt-get install libthrift-dev
+  - wget http://mirror.reverse.net/pub/apache/thrift/0.10.0/thrift-0.10.0.tar.gz -O /tmp/thrift.tar.gz
+  - bash ./travis-build-thrift.sh
   - gem install bundler --no-document
 
 rvm:
@@ -12,6 +13,7 @@ rvm:
   - 2.1.8
   - 2.2.1
   - 2.3.0
+  - 2.4.0
 script:
   # Please add to Rakefile instead of this section.
   - bundle exec rake
