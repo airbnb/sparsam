@@ -6,7 +6,8 @@ before_install:
   - sudo apt-get install automake bison flex g++ git libboost1.55-all-dev libevent-dev libssl-dev libtool make pkg-config -y
   - wget http://mirror.reverse.net/pub/apache/thrift/0.10.0/thrift-0.10.0.tar.gz -O /tmp/thrift.tar.gz
   - cd /tmp && tar xvf thrift.tar.gz && cd thrift-0.10.0 && cmake . -DBUILD_COMPILER=OFF 
-      -DBUILD_C_GLIB=OFF -DBUILD_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_JAVA=OFF && make -j && sudo make install
+      -DBUILD_C_GLIB=OFF -DBUILD_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_JAVA=OFF && make -j && 
+      sudo make install && cd -
   - gem install bundler --no-document
 
 rvm:
