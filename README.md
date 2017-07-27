@@ -1,4 +1,4 @@
-# Sparsam [![Build Status](https://travis-ci.org/airbnb/sparsam.svg?branch=master)](https://travis-ci.org/airbnb/sparsam)
+# Sparsam [![Build Status](https://travis-ci.org/airbnb/sparsam.svg?branch=master)](https://travis-ci.org/airbnb/sparsam) [![Coverage Status](https://coveralls.io/repos/github/airbnb/sparsam/badge.svg?branch=master)](https://coveralls.io/github/airbnb/sparsam?branch=master)
 New Thrift bindings and generator for Ruby!
 
 ## Super basic Example
