@@ -73,7 +73,6 @@ module Sparsam
     end
 
     def serialize(prot = Sparsam::CompactProtocol)
-      validate
       s = Sparsam::Serializer.new(prot, "")
       s.serialize(self.class, self)
     end

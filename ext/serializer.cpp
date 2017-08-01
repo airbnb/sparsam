@@ -454,6 +454,11 @@ void ThriftSerializer::writeStruct(VALUE klass, VALUE data) {
   FieldBegin fieldBegin;
   FieldInfo *fieldInfo;
   auto fields = FindOrCreateFieldInfoMap(klass);
+
+  if (!validateStruct(klass, data, false, false)) {
+    return;
+  }
+
   for (auto const & entry : *fields) {
     fieldBegin.fid = entry.first;
     fieldInfo = entry.second;
