@@ -3,7 +3,7 @@ require 'mkmf'
 
 $CFLAGS = " -fsigned-char -O3 -ggdb3 -mtune=native "
 $CXXFLAGS = " -std=c++0x -O3 -ggdb3 -mtune=native -I./third-party/sparsepp "
-if Gem::Version.new(RUBY_VERSION) < Gem::Version.new('2.0.0')
+if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new('2.0.0')
   $CPPFLAGS += $CXXFLAGS
 end
 

@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = 'sparsam'
-  s.version     = '0.1.3'
+  s.version     = '0.1.4'
   s.authors     = ['Airbnb Thrift Developers']
   s.email       = ['foundation.performance-eng@airbnb.com']
   s.homepage    = 'http://thrift.apache.org'
@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
 
   s.rubyforge_project = 'thrift'
 
-  s.files = Dir.glob("{lib,spec,ext}/**/*")
+  s.files = Dir.glob("{lib,spec,ext}/**/*.{c,h,rb,cpp}")
   s.test_files = Dir.glob("{test,spec,benchmark}/**/*")
   s.executables = Dir.glob("{bin}/**/*")
 
