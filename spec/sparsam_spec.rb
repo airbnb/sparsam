@@ -205,6 +205,20 @@ describe 'Sparsam' do
       expect { data.validate }.to raise_error(Sparsam::MissingMandatory)
     end
 
+    it "includes additional information on missing required fields in exception" do
+      data = MiniRequired.new
+
+      e = nil
+      begin
+        data.validate
+      rescue Sparsam::MissingMandatory => exception
+        e = exception
+      end
+
+      e.struct_name.should == MiniRequired.name
+      e.field_name.should == "id_i32"
+    end
+
     it "will throw errors when given junk data" do
       expect {
         Sparsam::Deserializer.deserialize(SS, "wolololololol")

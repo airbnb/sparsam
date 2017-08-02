@@ -136,8 +136,8 @@ static inline VALUE make_ruby_binary(const string &val) {
   return rb_str_new(val.c_str(), val.size());
 }
 
-static void raise_exc_with_struct_and_field_names(VALUE exc_class, VALUE msg, VALUE outer_struct, VALUE field_sym) {
-  VALUE struct_name = rb_class_name(CLASS_OF(outer_struct));
+static void raise_exc_with_struct_and_field_names(VALUE exc_class, VALUE msg, VALUE outer_struct_class, VALUE field_sym) {
+  VALUE struct_name = rb_class_name(outer_struct_class);
   VALUE field_name = rb_sym_to_s(field_sym);
   VALUE args[3] = {msg, struct_name, field_name};
   VALUE e = rb_class_new_instance(3, args, exc_class);
@@ -510,7 +510,7 @@ static void raise_type_mismatch(VALUE outer_struct, VALUE field_sym) {
     raise_exc_with_struct_and_field_names(
       SparsamTypeMismatchError,
       rb_str_new2("Type mismatch in field data"),
-      outer_struct,
+      CLASS_OF(outer_struct),
       field_sym);
 }
 
@@ -614,7 +614,11 @@ bool validateStruct(VALUE klass, VALUE data, bool validateContainerTypes,
     VALUE val = rb_ivar_get(data, entry.second->ivarName);
     if (NIL_P(val)) {
       if (!entry.second->isOptional) {
-        rb_raise(SparsamMissingMandatory, "Missing: fieldID %d", entry.first);
+        raise_exc_with_struct_and_field_names(
+          SparsamMissingMandatory,
+          rb_sprintf("Missing: fieldID %d", entry.first),
+          klass,
+          entry.second->symName);
         return false;
       }
       continue;
