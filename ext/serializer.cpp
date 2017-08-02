@@ -136,6 +136,14 @@ static inline VALUE make_ruby_binary(const string &val) {
   return rb_str_new(val.c_str(), val.size());
 }
 
+static void raise_exc_with_struct_and_field_names(VALUE exc_class, VALUE msg, VALUE outer_struct, VALUE field_sym) {
+  VALUE struct_name = rb_class_name(CLASS_OF(outer_struct));
+  VALUE field_name = rb_sym_to_s(field_sym);
+  VALUE args[3] = {msg, struct_name, field_name};
+  VALUE e = rb_class_new_instance(3, args, exc_class);
+  rb_exc_raise(e);
+}
+
 static inline VALUE make_ruby_bool(bool val) { return val ? Qtrue : Qfalse; }
 
 void ThriftSerializer::skip_n_type(uint32_t n, TType ttype) {
@@ -301,8 +309,11 @@ VALUE ThriftSerializer::readStruct(VALUE klass) {
     typeId = fieldInfo->ftype;
 
     if (typeId != fieldBegin.ftype) {
-      rb_raise(SparsamTypeMismatchError, "Type Mismatch. Defenition: %d, Actual: %d",
-               fieldBegin.ftype, typeId);
+      raise_exc_with_struct_and_field_names(
+        SparsamTypeMismatchError,
+        rb_sprintf("Type Mismatch. Defenition: %d, Actual: %d", fieldBegin.ftype, typeId),
+        klass,
+        fieldInfo->symName);
     }
 
     VALUE rb_value = this->readAny(fieldBegin.ftype, iter->second);
@@ -495,15 +506,18 @@ VALUE serializer_readStruct(VALUE self, VALUE klass) {
   catch_thrift_and_reraise();
 }
 
-static inline void raise_type_mismatch() {
-  rb_raise(SparsamTypeMismatchError, "Type mismatch in field data");
+static void raise_type_mismatch(VALUE outer_struct, VALUE field_sym) {
+    raise_exc_with_struct_and_field_names(
+      SparsamTypeMismatchError,
+      rb_str_new2("Type mismatch in field data"),
+      outer_struct,
+      field_sym);
 }
 
-bool validateArray(FieldInfo *type, VALUE arr, bool recursive) {
+bool validateArray(FieldInfo *type, VALUE arr, bool recursive, VALUE outer_struct, VALUE field_sym) {
   long length = RARRAY_LEN(arr);
   for (long i = 0; i < length; i++) {
-    if (!validateAny(type, rb_ary_entry(arr, i), recursive)) {
-      rb_raise(SparsamTypeMismatchError, "Type mismatch in container element");
+    if (!validateAny(type, rb_ary_entry(arr, i), recursive, outer_struct, field_sym)) {
       return false;
     }
   }
@@ -512,7 +526,7 @@ bool validateArray(FieldInfo *type, VALUE arr, bool recursive) {
 
 #define TEST_RB_VAL_FOR_CLASS(VAL, KLASS)                                      \
   if (!RTEST(rb_obj_is_kind_of(VAL, KLASS))) {                                 \
-    raise_type_mismatch();                                                     \
+    raise_type_mismatch(outer_struct, field_sym);                              \
     ret = false;                                                               \
   }
 
@@ -522,7 +536,7 @@ bool validateArray(FieldInfo *type, VALUE arr, bool recursive) {
     break;                                                                     \
   }
 
-bool validateAny(FieldInfo *type, VALUE val, bool recursive) {
+bool validateAny(FieldInfo *type, VALUE val, bool recursive, VALUE outer_struct, VALUE field_sym) {
   bool ret = true;
   switch (type->ftype) {
 
@@ -545,14 +559,14 @@ bool validateAny(FieldInfo *type, VALUE val, bool recursive) {
     TEST_RB_VAL_FOR_CLASS(val, klass_for_set)
     if (ret) {
       VALUE ary = rb_funcall(val, intern_for_to_a, 0);
-      ret = validateArray(type->elementType, ary, recursive);
+      ret = validateArray(type->elementType, ary, recursive, outer_struct, field_sym);
     }
     break;
   }
   case protocol::T_LIST: {
     TEST_RB_VAL_FOR_CLASS(val, klass_for_array)
     if (ret) {
-      ret = validateArray(type->elementType, val, recursive);
+      ret = validateArray(type->elementType, val, recursive, outer_struct, field_sym);
     }
     break;
   }
@@ -562,12 +576,13 @@ bool validateAny(FieldInfo *type, VALUE val, bool recursive) {
     if (ret) {
       bool flag = true;
       HASH_FOREACH_BEGIN(val, &flag, type->keyType, type->elementType,
-                         &recursive)
+                         &recursive, &outer_struct, &field_sym)
       bool *flag = (bool *)argv[0], *recursive = (bool *)argv[3];
+      VALUE *outer_struct = (VALUE *)argv[4], *field_sym = (VALUE *)argv[5];
       FieldInfo *field_info_key = (FieldInfo *)argv[1];
       FieldInfo *field_info_value = (FieldInfo *)argv[2];
-      if (!validateAny(field_info_key, k, *recursive) ||
-          !validateAny(field_info_value, v, *recursive)) {
+      if (!validateAny(field_info_key, k, *recursive, *outer_struct, *field_sym) ||
+          !validateAny(field_info_value, v, *recursive, *outer_struct, *field_sym)) {
         *flag = false;
         HASH_FOREACH_ABORT()
       }
@@ -604,7 +619,7 @@ bool validateStruct(VALUE klass, VALUE data, bool validateContainerTypes,
       }
       continue;
     }
-    if (validateContainerTypes && !validateAny(entry.second, val, recursive)) {
+    if (validateContainerTypes && !validateAny(entry.second, val, recursive, data, entry.second->symName)) {
       return false;
     }
   }

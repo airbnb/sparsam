@@ -92,6 +92,7 @@ describe 'Sparsam' do
       expect {
         Sparsam.validate(NotSS, data, Sparsam::STRICT)
       }.to raise_error(Sparsam::TypeMismatch)
+
       expect {
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
       }.to raise_error(Sparsam::TypeMismatch)
@@ -149,6 +150,21 @@ describe 'Sparsam' do
       expect {
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
       }.to raise_error(Sparsam::TypeMismatch)
+    end
+
+    it "includes additional data in TypeMismatch errors" do
+      data = EasilyInvalid.new
+      data.id_i32 = "definitely a string"
+
+      e = nil
+      begin
+        Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
+      rescue Sparsam::TypeMismatch => exception
+        e = exception
+      end
+
+      e.struct_name.should == EasilyInvalid.name
+      e.field_name.should == "id_i32"
     end
 
     it "works with crazy thriftness" do
