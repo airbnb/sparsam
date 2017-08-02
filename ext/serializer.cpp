@@ -387,6 +387,8 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
     HANDLE_TYPE(BYTE, Byte, NUM2SHORT)
 
   case protocol::T_STRING: {
+    Check_Type(actual, T_STRING);
+
     string data = string(StringValuePtr(actual), RSTRING_LEN(actual));
     if (field_info->isBinaryString) {
       this->tprot->writeBinary(data);
@@ -397,6 +399,8 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
   }
 
   case protocol::T_LIST: {
+    Check_Type(actual, T_ARRAY);
+
     long length = RARRAY_LEN(actual);
     TType elem = field_info->elementType->ftype;
     this->tprot->writeListBegin(elem, static_cast<size_t>(length));
@@ -420,6 +424,8 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
   }
 
   case protocol::T_MAP: {
+    Check_Type(actual, T_HASH);
+
     TType keyTType = field_info->keyType->ftype,
           valueTType = field_info->elementType->ftype;
     this->tprot->writeMapBegin(keyTType, valueTType,
@@ -527,6 +533,14 @@ bool validateAny(FieldInfo *type, VALUE val, bool recursive) {
     HANDLE_TYPE(I64, klass_for_integer)
     HANDLE_TYPE(DOUBLE, klass_for_float)
     HANDLE_TYPE(STRING, klass_for_string)
+
+  case protocol::T_BOOL: {
+    if (val != Qtrue || val != Qfalse) {
+      raise_type_mismatch();
+      ret = false;
+    }
+    break;
+  }
 
   case protocol::T_STRUCT: {
     TEST_RB_VAL_FOR_CLASS(val, type->klass)
