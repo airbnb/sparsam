@@ -136,7 +136,11 @@ static inline VALUE make_ruby_binary(const string &val) {
   return rb_str_new(val.c_str(), val.size());
 }
 
-static void raise_exc_with_struct_and_field_names(VALUE exc_class, VALUE msg, VALUE outer_struct_class, VALUE field_sym) {
+static void raise_exc_with_struct_and_field_names(
+        VALUE exc_class,
+        VALUE msg,
+        VALUE outer_struct_class,
+        VALUE field_sym) {
   VALUE struct_name = rb_class_name(outer_struct_class);
   VALUE field_name = rb_sym_to_s(field_sym);
   VALUE args[3] = {msg, struct_name, field_name};
@@ -514,7 +518,12 @@ static void raise_type_mismatch(VALUE outer_struct, VALUE field_sym) {
       field_sym);
 }
 
-bool validateArray(FieldInfo *type, VALUE arr, bool recursive, VALUE outer_struct, VALUE field_sym) {
+bool validateArray(
+        FieldInfo *type,
+        VALUE arr,
+        bool recursive,
+        VALUE outer_struct,
+        VALUE field_sym) {
   long length = RARRAY_LEN(arr);
   for (long i = 0; i < length; i++) {
     if (!validateAny(type, rb_ary_entry(arr, i), recursive, outer_struct, field_sym)) {
@@ -623,7 +632,8 @@ bool validateStruct(VALUE klass, VALUE data, bool validateContainerTypes,
       }
       continue;
     }
-    if (validateContainerTypes && !validateAny(entry.second, val, recursive, data, entry.second->symName)) {
+    if (validateContainerTypes &&
+        !validateAny(entry.second, val, recursive, data, entry.second->symName)) {
       return false;
     }
   }
