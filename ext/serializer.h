@@ -85,14 +85,11 @@ public:
 private:
   VALUE readUnion(VALUE klass);
   VALUE readAny(TType ttype, FieldInfo *field_info);
-  void writeAny(TType ttype, FieldInfo *field_info, VALUE data);
+  void writeAny(TType ttype, FieldInfo *field_info, VALUE data, VALUE outer_struct, VALUE field_sym);
   void skip_n_type(uint32_t n, TType ttype);
   void skip_n_pair(uint32_t n, TType type_a, TType type_b);
 };
 
-bool validateStruct(VALUE klass, VALUE data, bool validateContainerTypes,
-                    bool recursive);
-bool validateAny(FieldInfo *type, VALUE val, bool recursive, VALUE outer_struct, VALUE field_sym);
 FieldInfoMap *FindOrCreateFieldInfoMap(VALUE klass);
 FieldInfo *CreateFieldInfo(VALUE field_map_entry);
 FieldInfoMap *CreateFieldInfoMap(VALUE klass);
