@@ -8,14 +8,22 @@ module Sparsam
   end
 
   class MissingMandatory < Exception
-    def initialize(msg)
-      super
+    attr_reader :struct_name, :field_name
+
+    def initialize(msg, struct_name = nil, field_name = nil)
+      @struct_name = struct_name
+      @field_name = field_name
+      super(msg)
     end
   end
 
   class TypeMismatch < Exception
-    def initialize(msg)
-      super
+    attr_reader :struct_name, :field_name
+
+    def initialize(msg, struct_name = nil, field_name = nil)
+      @struct_name = struct_name
+      @field_name = field_name
+      super(msg)
     end
   end
 

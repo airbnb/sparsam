@@ -92,7 +92,7 @@ private:
 
 bool validateStruct(VALUE klass, VALUE data, bool validateContainerTypes,
                     bool recursive);
-bool validateAny(FieldInfo *type, VALUE val, bool recursive);
+bool validateAny(FieldInfo *type, VALUE val, bool recursive, VALUE outer_struct, VALUE field_sym);
 FieldInfoMap *FindOrCreateFieldInfoMap(VALUE klass);
 FieldInfo *CreateFieldInfo(VALUE field_map_entry);
 FieldInfoMap *CreateFieldInfoMap(VALUE klass);

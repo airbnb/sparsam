@@ -92,6 +92,7 @@ describe 'Sparsam' do
       expect {
         Sparsam.validate(NotSS, data, Sparsam::STRICT)
       }.to raise_error(Sparsam::TypeMismatch)
+
       expect {
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
       }.to raise_error(Sparsam::TypeMismatch)
@@ -151,6 +152,21 @@ describe 'Sparsam' do
       }.to raise_error(Sparsam::TypeMismatch)
     end
 
+    it "includes additional data in TypeMismatch errors" do
+      data = EasilyInvalid.new
+      data.id_i32 = "definitely a string"
+
+      e = nil
+      begin
+        Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
+      rescue Sparsam::TypeMismatch => exception
+        e = exception
+      end
+
+      e.struct_name.should == EasilyInvalid.name
+      e.field_name.should == "id_i32"
+    end
+
     it "works with crazy thriftness" do
       data = EasilyInvalid.new
       data.sure = [{ Set.new([1]) => { 1 => Set.new([[{ EasilyInvalid.new => "sure" }]]) } }]
@@ -187,6 +203,20 @@ describe 'Sparsam' do
     it "will validate required fields" do
       data = MiniRequired.new
       expect { data.validate }.to raise_error(Sparsam::MissingMandatory)
+    end
+
+    it "includes additional information on missing required fields in exception" do
+      data = MiniRequired.new
+
+      e = nil
+      begin
+        data.validate
+      rescue Sparsam::MissingMandatory => exception
+        e = exception
+      end
+
+      e.struct_name.should == MiniRequired.name
+      e.field_name.should == "id_i32"
     end
 
     it "will throw errors when given junk data" do
