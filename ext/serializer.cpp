@@ -563,8 +563,8 @@ bool validateAny(FieldInfo *type, VALUE val, bool recursive, VALUE outer_struct,
     HANDLE_TYPE(STRING, klass_for_string)
 
   case protocol::T_BOOL: {
-    if (val != Qtrue || val != Qfalse) {
-      raise_type_mismatch();
+    if ( !(val == Qtrue || val == Qfalse) ) {
+      raise_type_mismatch(outer_struct, field_sym);
       ret = false;
     }
     break;
