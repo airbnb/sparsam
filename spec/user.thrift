@@ -60,3 +60,24 @@ struct NotSS_plus {
 
 struct nothing {
 }
+
+struct EveryType {
+  1: optional bool a_bool
+  2: optional byte a_byte
+  3: optional i16 an_i16
+  4: optional i32 an_i32
+  5: optional i64 an_i64
+  6: optional double a_double
+  7: optional binary a_binary
+  8: optional string a_string
+
+  9: optional list<i64> an_i64_list
+  10: optional set<i64> an_i64_set
+  11: optional map<i64, i64> an_i64_map
+
+  12: optional list<map<i64, i64>> a_list_of_i64_maps
+  13: optional map<map<i64, i64>, map<i64, i64>> a_map_of_i64_maps
+
+  14: optional US a_struct
+  15: optional UN a_union
+}

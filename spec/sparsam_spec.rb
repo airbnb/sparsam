@@ -300,5 +300,69 @@ describe 'Sparsam' do
         Sparsam::Deserializer.deserialize(SS, really_bad, Sparsam::BinaryProtocol)
       }.to raise_error(Sparsam::Exception)
     end
+
+    it "handles all sorts of type issues without crashing" do
+      field_map = {
+        a_bool: :boolean,
+        a_byte: :int,
+        an_i16: :int,
+        an_i32: :int,
+        an_i64: :int,
+        a_double: :float,
+        a_binary: :string,
+        a_string: :string,
+
+        an_i64_list: :int_list,
+        an_i64_set: :int_set,
+        an_i64_map: :int_map,
+
+        a_list_of_i64_maps: :int_map_list,
+        a_map_of_i64_maps: :int_map_map,
+
+        a_struct: :struct,
+        a_union: :union,
+      }
+
+      scalar_values = {
+        boolean: true,
+        int: 42,
+        float: 3.14,
+        string: "Hello",
+        struct: US.new(id_i32: 10),
+        union: UN.new(id_s: "woo"),
+        complex: Complex(1),
+        bigint: 2**128,
+        rational: Rational(2, 3),
+      }
+
+      simple_collection_values = scalar_values.each_with_object({}) do |(type, val), obj|
+        obj[:"#{type}_list"] = [val]
+        obj[:"#{type}_set"] = Set.new([val])
+        obj[:"#{type}_map"] = { val => val }
+      end
+
+      nested_collection_values =
+        simple_collection_values.each_with_object({}) do |(type, val), obj|
+          obj[:"#{type}_list"] = [val]
+          obj[:"#{type}_set"] = Set.new([val])
+          obj[:"#{type}_map"] = { val => val }
+        end
+
+      all_values = scalar_values.merge(simple_collection_values).merge(nested_collection_values)
+
+      field_map.each do |field, type|
+        all_values.each do |val_type, val|
+          next if val_type == type
+
+          s = EveryType.new
+          s.send(:"#{field}=", val)
+
+          begin
+            s.serialize
+          rescue TypeError, RangeError, NoMethodError
+          end
+        end
+      end
+    end
   end
 end
