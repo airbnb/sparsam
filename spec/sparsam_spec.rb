@@ -387,9 +387,20 @@ describe 'Sparsam' do
           s = EveryType.new
           s.send(:"#{field}=", val)
 
+          # Validation doesn't do range checking, though serialization does
+          unless val_type.to_s =~ /bigint/
+            expect {
+              Sparsam.validate(s.class, s, Sparsam::STRICT)
+            }.to(
+              raise_error(Sparsam::TypeMismatch),
+              "assigning #{field} : #{type} a value of " \
+              "#{val.inspect} : #{val_type} did not raise TypeMismatch"
+            )
+          end
+
           begin
             s.serialize
-          rescue TypeError, RangeError, NoMethodError
+          rescue TypeError, RangeError, NoMethodError, Sparsam::TypeMismatch
           end
         end
       end
