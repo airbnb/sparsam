@@ -408,35 +408,37 @@ describe 'Sparsam' do
       end
     end
 
-    it "handles integer ranges" do
-      fields = {
-        a_byte: 8,
-        an_i16: 16,
-        an_i32: 32,
-        an_i64: 64,
-      }
+    unless RUBY_VERSION =~ /^1\.9/
+      it "handles integer ranges" do
+        fields = {
+          a_byte: 8,
+          an_i16: 16,
+          an_i32: 32,
+          an_i64: 64,
+        }
 
-      fields.each do |field, size|
-        s = EveryType.new
+        fields.each do |field, size|
+          s = EveryType.new
 
-        max_val = 2**(size-1)-1
+          max_val = 2**(size - 1) - 1
 
-        [max_val, ~max_val].each do |val|
-          s.send(:"#{field}=", val)
+          [max_val, ~max_val].each do |val|
+            s.send(:"#{field}=", val)
 
-          expect {
-            s.serialize
-          }.to_not raise_error, "#{field} of #{size} bits unable to hold #{val}"
-        end
+            expect {
+              s.serialize
+            }.not_to raise_error, "#{field} of #{size} bits unable to hold #{val}"
+          end
 
-        [max_val + 1, ~(max_val + 1)].each do |val|
-          s.send(:"#{field}=", val)
-          expect {
-            s.serialize
-          }.to(
-            raise_error(RangeError),
-            "#{field} of #{size} bits apparently able to hold value #{val} in defiance of nature"
-          )
+          [max_val + 1, ~(max_val + 1)].each do |val|
+            s.send(:"#{field}=", val)
+            expect {
+              s.serialize
+            }.to(
+              raise_error(RangeError),
+              "#{field} of #{size} bits apparently able to hold value #{val} in defiance of nature"
+            )
+          end
         end
       end
     end
