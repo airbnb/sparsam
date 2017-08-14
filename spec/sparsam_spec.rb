@@ -361,7 +361,6 @@ describe 'Sparsam' do
         struct: US.new(id_i32: 10),
         union: UN.new(id_s: "woo"),
         complex: Complex(1),
-        bigint: 2**128,
         rational: Rational(2, 3),
       }
 
@@ -398,9 +397,47 @@ describe 'Sparsam' do
             )
           end
 
-          begin
+          expect {
             s.serialize
-          rescue TypeError, RangeError, NoMethodError, Sparsam::TypeMismatch
+          }.to(
+            raise_error(Sparsam::TypeMismatch),
+            "assigning #{field} : #{type} a value of " \
+            "#{val.inspect} : #{val_type} did not raise TypeMismatch"
+          )
+        end
+      end
+    end
+
+    unless RUBY_VERSION =~ /^1\.9/
+      it "handles integer ranges" do
+        fields = {
+          a_byte: 8,
+          an_i16: 16,
+          an_i32: 32,
+          an_i64: 64,
+        }
+
+        fields.each do |field, size|
+          s = EveryType.new
+
+          max_val = 2**(size - 1) - 1
+
+          [max_val, ~max_val].each do |val|
+            s.send(:"#{field}=", val)
+
+            expect {
+              s.serialize
+            }.not_to raise_error, "#{field} of #{size} bits unable to hold #{val}"
+          end
+
+          [max_val + 1, ~(max_val + 1)].each do |val|
+            s.send(:"#{field}=", val)
+            expect {
+              s.serialize
+            }.to(
+              raise_error(RangeError),
+              "#{field} of #{size} bits apparently able to hold value #{val} in defiance of nature"
+            )
           end
         end
       end

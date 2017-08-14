@@ -42,6 +42,8 @@ VALUE SparsamMissingMandatory;
 VALUE SparsamUnionException;
 VALUE SparsamUnknownTypeException;
 
+VALUE SetClass;
+
 KlassFieldsCache klassCache; // consider the memory leaked.
 std::unordered_set<VALUE> unions;
 
@@ -82,6 +84,7 @@ void initialize_runtime_constants() {
   SparsamUnionException = rb_const_get_at(Sparsam, rb_intern("UnionException"));
   SparsamUnknownTypeException =
       rb_const_get_at(Sparsam, rb_intern("UnknownTypeException"));
+  SetClass = rb_const_get_at(rb_cObject, rb_intern("Set"));
 }
 
 void serializer_init(void *serializer, int protocol, void *str_arg1,
@@ -138,15 +141,40 @@ static inline VALUE make_ruby_binary(const string &val) {
 
 static void raise_exc_with_struct_and_field_names(
         VALUE exc_class,
-        VALUE msg,
+        VALUE msg_prefix,
         VALUE outer_struct_class,
         VALUE field_sym) {
   VALUE struct_name = rb_class_name(outer_struct_class);
   VALUE field_name = rb_sym_to_s(field_sym);
+
+  VALUE msg = rb_sprintf("%s (in %s#%s)",
+      RSTRING_PTR(msg_prefix),
+      RSTRING_PTR(struct_name),
+      RSTRING_PTR(field_name));
   VALUE args[3] = {msg, struct_name, field_name};
   VALUE e = rb_class_new_instance(3, args, exc_class);
   rb_exc_raise(e);
 }
+
+static void raise_type_mismatch(VALUE outer_struct, VALUE field_sym) {
+    raise_exc_with_struct_and_field_names(
+      SparsamTypeMismatchError,
+      rb_str_new2("Mismatched type"),
+      CLASS_OF(outer_struct),
+      field_sym);
+}
+
+static inline long raise_type_mismatch_as_value(VALUE outer_struct, VALUE field_sym) {
+  raise_type_mismatch(outer_struct, field_sym);
+  return 0;
+}
+
+static inline void Sparsam_Check_Type(VALUE x, int t, VALUE outer_struct, VALUE field_sym) {
+  if (!(RB_TYPE_P(x, t))) {
+    raise_type_mismatch(outer_struct, field_sym);
+  }
+}
+
 
 static inline VALUE make_ruby_bool(bool val) { return val ? Qtrue : Qfalse; }
 
@@ -315,7 +343,7 @@ VALUE ThriftSerializer::readStruct(VALUE klass) {
     if (typeId != fieldBegin.ftype) {
       raise_exc_with_struct_and_field_names(
         SparsamTypeMismatchError,
-        rb_sprintf("Type Mismatch. Defenition: %d, Actual: %d", fieldBegin.ftype, typeId),
+        rb_sprintf("Mismatched type (definition: %d, found: %d)", fieldBegin.ftype, typeId),
         klass,
         fieldInfo->symName);
     }
@@ -387,22 +415,85 @@ VALUE ThriftSerializer::readUnion(VALUE klass) {
 
 #define HANDLE_TYPE(TYPE, WRITE_METHOD, CONVERT)                               \
   case protocol::T_##TYPE: {                                                   \
-    this->tprot->write##WRITE_METHOD(CONVERT(actual));                         \
+    this->tprot->write##WRITE_METHOD(CONVERT);                                 \
     break;                                                                     \
   }
 
+static inline long raise_bignum_range_error_as_value() {
+  rb_raise(rb_eRangeError, "bignum too big to convert");
+  return 0;
+}
+
+#define CONVERT_FIXNUM(CONVERT)                                                \
+  ((FIXNUM_P(actual)) ?                                                        \
+    CONVERT(actual) :                                                          \
+    ((RB_TYPE_P(actual, T_BIGNUM)) ?                                           \
+      raise_bignum_range_error_as_value() :                                    \
+      raise_type_mismatch_as_value(outer_struct, field_sym)))
+
+#define CONVERT_I64                                                            \
+  ((FIXNUM_P(actual)) ?                                                        \
+    (LONG_LONG)FIX2LONG(actual) :                                              \
+    ((RB_TYPE_P(actual, T_BIGNUM)) ?                                           \
+      rb_big2ll(actual) :                                                      \
+      raise_type_mismatch_as_value(outer_struct, field_sym)))
+
+#ifdef RB_FLOAT_TYPE_P
+#define FLOAT_TYPE_P(x) RB_FLOAT_TYPE_P(x)
+#else
+#define FLOAT_TYPE_P(x) RB_TYPE_P(x, T_FLOAT)
+#endif
+
+#define CONVERT_FLOAT(CONVERT)                                                 \
+  ((FLOAT_TYPE_P(actual)) ?                                                    \
+   CONVERT(actual) :                                                           \
+   raise_type_mismatch_as_value(outer_struct, field_sym))                      \
+
+static inline bool convertBool(VALUE actual, VALUE outer_struct, VALUE field_sym) {
+  switch (actual) {
+    case Qtrue:
+      return true;
+    case Qfalse:
+      return false;
+    default:
+      raise_type_mismatch(outer_struct, field_sym);
+  }
+
+  /* unreachable */
+  return false;
+}
+
+#ifdef FIX2SHORT
+#define SHORT_CONVERT(x) FIX2SHORT(x)
+#else
+#define SHORT_CONVERT(x) ((short)FIX2INT(x))
+#endif
+
+static inline char byte_convert(VALUE x) {
+  short s = SHORT_CONVERT(x);
+
+  if (s <= 127 && s >= -128) {
+    return (char) s;
+  } else {
+    rb_raise(rb_eRangeError, "integer %d out of range for char", s);
+  }
+
+  /* unreachable */
+  return 0;
+}
+
 void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
-                                VALUE actual) {
+                                VALUE actual, VALUE outer_struct, VALUE field_sym) {
   switch (ttype) {
-    HANDLE_TYPE(I16, I16, NUM2SHORT)
-    HANDLE_TYPE(I32, I32, NUM2INT)
-    HANDLE_TYPE(I64, I64, NUM2LL)
-    HANDLE_TYPE(BOOL, Bool, RTEST)
-    HANDLE_TYPE(DOUBLE, Double, NUM2DBL)
-    HANDLE_TYPE(BYTE, Byte, NUM2SHORT)
+    HANDLE_TYPE(I16, I16, CONVERT_FIXNUM(SHORT_CONVERT))
+    HANDLE_TYPE(I32, I32, CONVERT_FIXNUM(FIX2INT))
+    HANDLE_TYPE(I64, I64, CONVERT_I64)
+    HANDLE_TYPE(BOOL, Bool, convertBool(actual, outer_struct, field_sym))
+    HANDLE_TYPE(DOUBLE, Double, CONVERT_FLOAT(NUM2DBL))
+    HANDLE_TYPE(BYTE, Byte, CONVERT_FIXNUM(byte_convert))
 
   case protocol::T_STRING: {
-    Check_Type(actual, T_STRING);
+    Sparsam_Check_Type(actual, T_STRING, outer_struct, field_sym);
 
     string data = string(StringValuePtr(actual), RSTRING_LEN(actual));
     if (field_info->isBinaryString) {
@@ -414,48 +505,58 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
   }
 
   case protocol::T_LIST: {
-    Check_Type(actual, T_ARRAY);
+    Sparsam_Check_Type(actual, T_ARRAY, outer_struct, field_sym);
 
     long length = RARRAY_LEN(actual);
     TType elem = field_info->elementType->ftype;
     this->tprot->writeListBegin(elem, static_cast<size_t>(length));
     for (long i = 0; i < length; i++) {
-      this->writeAny(elem, field_info->elementType, rb_ary_entry(actual, i));
+      this->writeAny(elem, field_info->elementType, rb_ary_entry(actual, i), outer_struct, field_sym);
     }
     this->tprot->writeListEnd();
     break;
   }
 
   case protocol::T_SET: {
+    if (CLASS_OF(actual) != SetClass) {
+      raise_type_mismatch(outer_struct, field_sym);
+    }
+
     VALUE ary = rb_funcall(actual, intern_for_to_a, 0);
     long length = RARRAY_LEN(ary);
     TType elem = field_info->elementType->ftype;
     this->tprot->writeListBegin(elem, static_cast<size_t>(length));
     for (long i = 0; i < length; i++) {
-      this->writeAny(elem, field_info->elementType, rb_ary_entry(ary, i));
+      this->writeAny(elem, field_info->elementType, rb_ary_entry(ary, i), outer_struct, field_sym);
     }
     this->tprot->writeListEnd();
     break;
   }
 
   case protocol::T_MAP: {
-    Check_Type(actual, T_HASH);
+    Sparsam_Check_Type(actual, T_HASH, outer_struct, field_sym);
 
     TType keyTType = field_info->keyType->ftype,
           valueTType = field_info->elementType->ftype;
     this->tprot->writeMapBegin(keyTType, valueTType,
                                static_cast<size_t>(RHASH_SIZE(actual)));
-    HASH_FOREACH_BEGIN(actual, this, field_info)
+    HASH_FOREACH_BEGIN(actual, this, field_info, &outer_struct, &field_sym)
     ThriftSerializer *that = (ThriftSerializer *)argv[0];
     FieldInfo *field_info = (FieldInfo *)argv[1];
-    that->writeAny(field_info->keyType->ftype, field_info->keyType, k);
-    that->writeAny(field_info->elementType->ftype, field_info->elementType, v);
+    VALUE *outer_struct = (VALUE *)argv[2];
+    VALUE *field_sym = (VALUE *)argv[3];
+    that->writeAny(field_info->keyType->ftype, field_info->keyType, k, *outer_struct, *field_sym);
+    that->writeAny(field_info->elementType->ftype, field_info->elementType, v, *outer_struct, *field_sym);
     HASH_FOREACH_END()
     this->tprot->writeMapEnd();
     break;
   }
 
   case protocol::T_STRUCT: {
+    if (CLASS_OF(actual) != field_info->klass) {
+      raise_type_mismatch(outer_struct, field_sym);
+    }
+
     static const string cname = "";
     this->tprot->writeStructBegin(cname.c_str());
     this->writeStruct(field_info->klass, actual);
@@ -470,13 +571,32 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
 
 #undef HANDLE_TYPE
 
+static bool checkRequiredFields(VALUE klass, VALUE data) {
+  auto fields = FindOrCreateFieldInfoMap(klass);
+  for (auto const &entry : *fields) {
+    if (!entry.second->isOptional) {
+      VALUE val = rb_ivar_get(data, entry.second->ivarName);
+      if (NIL_P(val)) {
+        raise_exc_with_struct_and_field_names(
+          SparsamMissingMandatory,
+          rb_str_new2("Required field missing"),
+          klass,
+          entry.second->symName);
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 void ThriftSerializer::writeStruct(VALUE klass, VALUE data) {
   static const string cname = "";
   FieldBegin fieldBegin;
   FieldInfo *fieldInfo;
   auto fields = FindOrCreateFieldInfoMap(klass);
 
-  if (!validateStruct(klass, data, false, false)) {
+  if (!checkRequiredFields(klass, data)) {
     return;
   }
 
@@ -487,7 +607,7 @@ void ThriftSerializer::writeStruct(VALUE klass, VALUE data) {
     VALUE actual = rb_ivar_get(data, fieldInfo->ivarName);
     if (!NIL_P(actual)) {
       this->tprot->writeFieldBegin(cname.c_str(), fieldBegin.ftype, fieldBegin.fid);
-      this->writeAny(fieldBegin.ftype, entry.second, actual);
+      this->writeAny(fieldBegin.ftype, entry.second, actual, data, fieldInfo->symName);
       this->tprot->writeFieldEnd();
     }
   }
@@ -495,6 +615,24 @@ void ThriftSerializer::writeStruct(VALUE klass, VALUE data) {
 
 VALUE serializer_writeStruct(VALUE self, VALUE klass, VALUE data) {
   watch_for_texcept() get_ts();
+
+  if (CLASS_OF(data) != klass) {
+    VALUE expected_name = rb_class_name(klass);
+    VALUE actual_name = rb_class_name(CLASS_OF(data));
+
+    raise_exc_with_struct_and_field_names(
+      SparsamTypeMismatchError,
+      rb_sprintf(
+        "Mismatched type passed to serialize (expected: %s got: %s)",
+        RSTRING_PTR(expected_name),
+        RSTRING_PTR(actual_name)),
+      data,
+      ID2SYM(rb_intern("(root)")));
+
+    RB_GC_GUARD(expected_name);
+    RB_GC_GUARD(actual_name);
+  }
+
   static const string cname = "";
   ts->tprot->writeStructBegin(cname.c_str());
   ts->writeStruct(klass, data);
@@ -514,159 +652,6 @@ VALUE serializer_readStruct(VALUE self, VALUE klass) {
   ts->tprot->readStructEnd();
   return ret;
   catch_thrift_and_reraise();
-}
-
-static void raise_type_mismatch(VALUE outer_struct, VALUE field_sym) {
-    raise_exc_with_struct_and_field_names(
-      SparsamTypeMismatchError,
-      rb_str_new2("Type mismatch in field data"),
-      CLASS_OF(outer_struct),
-      field_sym);
-}
-
-bool validateArray(
-        FieldInfo *type,
-        VALUE arr,
-        bool recursive,
-        VALUE outer_struct,
-        VALUE field_sym) {
-  long length = RARRAY_LEN(arr);
-  for (long i = 0; i < length; i++) {
-    if (!validateAny(type, rb_ary_entry(arr, i), recursive, outer_struct, field_sym)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-#define TEST_RB_VAL_FOR_CLASS(VAL, KLASS)                                      \
-  if (!RTEST(rb_obj_is_kind_of(VAL, KLASS))) {                                 \
-    raise_type_mismatch(outer_struct, field_sym);                              \
-    ret = false;                                                               \
-  }
-
-#define HANDLE_TYPE(TYPE, KLASS)                                               \
-  case protocol::T_##TYPE: {                                                   \
-    TEST_RB_VAL_FOR_CLASS(val, KLASS)                                          \
-    break;                                                                     \
-  }
-
-bool validateAny(FieldInfo *type, VALUE val, bool recursive, VALUE outer_struct, VALUE field_sym) {
-  bool ret = true;
-  switch (type->ftype) {
-
-    HANDLE_TYPE(BYTE, klass_for_integer)
-    HANDLE_TYPE(I16, klass_for_integer)
-    HANDLE_TYPE(I32, klass_for_integer)
-    HANDLE_TYPE(I64, klass_for_integer)
-    HANDLE_TYPE(DOUBLE, klass_for_float)
-    HANDLE_TYPE(STRING, klass_for_string)
-
-  case protocol::T_BOOL: {
-    if ( !(val == Qtrue || val == Qfalse) ) {
-      raise_type_mismatch(outer_struct, field_sym);
-      ret = false;
-    }
-    break;
-  }
-
-  case protocol::T_STRUCT: {
-    TEST_RB_VAL_FOR_CLASS(val, type->klass)
-    if (ret && recursive) {
-      ret = validateStruct(type->klass, val, true, recursive);
-    }
-    break;
-  }
-
-  case protocol::T_SET: {
-    TEST_RB_VAL_FOR_CLASS(val, klass_for_set)
-    if (ret) {
-      VALUE ary = rb_funcall(val, intern_for_to_a, 0);
-      ret = validateArray(type->elementType, ary, recursive, outer_struct, field_sym);
-    }
-    break;
-  }
-  case protocol::T_LIST: {
-    TEST_RB_VAL_FOR_CLASS(val, klass_for_array)
-    if (ret) {
-      ret = validateArray(type->elementType, val, recursive, outer_struct, field_sym);
-    }
-    break;
-  }
-
-  case protocol::T_MAP: {
-    TEST_RB_VAL_FOR_CLASS(val, klass_for_hash)
-    if (ret) {
-      bool flag = true;
-      HASH_FOREACH_BEGIN(val, &flag, type->keyType, type->elementType,
-                         &recursive, &outer_struct, &field_sym)
-      bool *flag = (bool *)argv[0], *recursive = (bool *)argv[3];
-      VALUE *outer_struct = (VALUE *)argv[4], *field_sym = (VALUE *)argv[5];
-      FieldInfo *field_info_key = (FieldInfo *)argv[1];
-      FieldInfo *field_info_value = (FieldInfo *)argv[2];
-      if (!validateAny(field_info_key, k, *recursive, *outer_struct, *field_sym) ||
-          !validateAny(field_info_value, v, *recursive, *outer_struct, *field_sym)) {
-        *flag = false;
-        HASH_FOREACH_ABORT()
-      }
-      HASH_FOREACH_RET()
-      HASH_FOREACH_END()
-    }
-    break;
-  }
-
-  default: {
-    rb_raise(SparsamUnknownTypeException, "Unknown type received.");
-    ret = false;
-    break;
-  }
-  }
-  return ret;
-}
-#undef HANDLE_TYPE
-#undef TEST_RB_VAL_FOR_CLASS
-
-bool validateStruct(VALUE klass, VALUE data, bool validateContainerTypes,
-                    bool recursive) {
-  if (!RTEST(rb_obj_is_kind_of(data, klass))) {
-    rb_raise(SparsamTypeMismatchError, "Wrong type of struct given for data");
-    return false;
-  }
-  auto fields = FindOrCreateFieldInfoMap(klass);
-  for (auto const &entry : *fields) {
-    VALUE val = rb_ivar_get(data, entry.second->ivarName);
-    if (NIL_P(val)) {
-      if (!entry.second->isOptional) {
-        raise_exc_with_struct_and_field_names(
-          SparsamMissingMandatory,
-          rb_sprintf("Missing: fieldID %d", entry.first),
-          klass,
-          entry.second->symName);
-        return false;
-      }
-      continue;
-    }
-    if (validateContainerTypes &&
-        !validateAny(entry.second, val, recursive, data, entry.second->symName)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-VALUE serializer_validate(VALUE self, VALUE klass, VALUE data,
-                          VALUE strictness) {
-  switch (static_cast<ValidateStrictness>(FIX2INT(strictness))) {
-  case strict: {
-    return validateStruct(klass, data, true, false) ? Qtrue : Qfalse;
-  }
-  case recursive: {
-    return validateStruct(klass, data, true, true) ? Qtrue : Qfalse;
-  }
-  default: {
-    return validateStruct(klass, data, false, false) ? Qtrue : Qfalse;
-  }
-  }
 }
 
 #define R_FIX_TO_TTYPE(x) (static_cast<TType>(FIX2INT(x)))
@@ -689,7 +674,7 @@ ID field_name_to_ivar_id(VALUE str_name) {
   if (str_name != Qnil) {
     return rb_intern_str(rb_str_concat(rb_str_new2("@"), str_name));
   } else {
-    return NULL;
+    return 0;
   }
 }
 
@@ -697,7 +682,7 @@ VALUE field_name_to_sym(VALUE str_name) {
   if (str_name != Qnil) {
     return ID2SYM(rb_intern_str(str_name));
   } else {
-    return NULL;
+    return 0;
   }
 }
 

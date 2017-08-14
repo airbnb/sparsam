@@ -69,7 +69,6 @@ void Init_sparsam_native() {
   Sparsam = rb_define_module("Sparsam");
   rb_define_singleton_method(Sparsam, "init!", sparsam_init_bang, 0);
   rb_define_singleton_method(Sparsam, "cache_fields", cache_fields, 1);
-  rb_define_singleton_method(Sparsam, "validate", serializer_validate, 3);
   VALUE SparsamSerializer = rb_define_class_under(Sparsam, "Serializer", rb_cObject);
   SparsamNativeError =
       rb_define_class_under(Sparsam, "Exception", rb_eStandardError);

@@ -8,3 +8,11 @@ require 'sparsam/union'
 require 'sparsam/deserializer'
 
 Sparsam.init!
+
+module Sparsam
+  # Deprecated
+  def self.validate(klass, data, strictness)
+    data.serialize
+    true
+  end
+end
