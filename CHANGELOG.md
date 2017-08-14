@@ -1,3 +1,8 @@
+# 0.2.0
+* Move validation into serialization
+* Remove field question mark methods
+* Remove Ruby type checking (this is now part of serialization)
+
 # 0.1.5
 * Add structured data around where validation failed to validation errors
 * Validate required fields during serialization for nested structs
