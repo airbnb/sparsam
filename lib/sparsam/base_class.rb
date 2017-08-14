@@ -23,20 +23,7 @@ module Sparsam
     def self.generate_accessors(klass)
       klass::FIELDS.each do |field_key, field_info|
         field_accessor(klass, field_key, field_info)
-        qmark_isset_method(klass, field_info)
       end
-    end
-
-    # TODO(Ben Hughes): Do we ever use those, these are an unexpected
-    # definition of predicate accessors
-    def self.qmark_isset_method(klass, field_info)
-      field_name = field_info[:name]
-
-      klass.class_eval(<<-EOF, __FILE__, __LINE__)
-        def #{field_name}?
-          !#{field_name}.nil?
-        end
-      EOF
     end
 
     def self.generate_default_values(klass)
