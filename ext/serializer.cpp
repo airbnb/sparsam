@@ -518,7 +518,7 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
   }
 
   case protocol::T_SET: {
-    if (CLASS_OF(actual) != SetClass) {
+    if (rb_class_real(CLASS_OF(actual)) != SetClass) {
       raise_type_mismatch(outer_struct, field_sym);
     }
 
@@ -553,7 +553,7 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
   }
 
   case protocol::T_STRUCT: {
-    if (CLASS_OF(actual) != field_info->klass) {
+    if (rb_class_real(CLASS_OF(actual)) != field_info->klass) {
       raise_type_mismatch(outer_struct, field_sym);
     }
 
@@ -616,7 +616,7 @@ void ThriftSerializer::writeStruct(VALUE klass, VALUE data) {
 VALUE serializer_writeStruct(VALUE self, VALUE klass, VALUE data) {
   watch_for_texcept() get_ts();
 
-  if (CLASS_OF(data) != klass) {
+  if (rb_class_real(CLASS_OF(data)) != klass) {
     VALUE expected_name = rb_class_name(klass);
     VALUE actual_name = rb_class_name(CLASS_OF(data));
 
