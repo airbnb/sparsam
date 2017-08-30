@@ -442,5 +442,23 @@ describe 'Sparsam' do
         end
       end
     end
+
+    it 'handles structs with modified eigenclasses' do
+      nested_struct = US.new
+
+      class << nested_struct
+        def foo
+        end
+      end
+
+      data = SS.new(us_i: nested_struct)
+
+      class << data
+        def foo
+        end
+      end
+
+      expect { data.serialize }.not_to raise_error
+    end
   end
 end
