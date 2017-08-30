@@ -1,3 +1,6 @@
+# 0.2.2
+* Handle eigenclasses correctly in serializer
+
 # 0.2.1
 * Fix crash when serialize is called with a mismatched type
 
