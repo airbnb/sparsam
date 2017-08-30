@@ -626,7 +626,7 @@ VALUE serializer_writeStruct(VALUE self, VALUE klass, VALUE data) {
         "Mismatched type passed to serialize (expected: %s got: %s)",
         RSTRING_PTR(expected_name),
         RSTRING_PTR(actual_name)),
-      data,
+      CLASS_OF(data),
       ID2SYM(rb_intern("(root)")));
 
     RB_GC_GUARD(expected_name);
