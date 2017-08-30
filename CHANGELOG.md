@@ -1,3 +1,6 @@
+# 0.2.1
+* Fix crash when serialize is called with a mismatched type
+
 # 0.2.0
 * Move validation into serialization
 * Remove field question mark methods
