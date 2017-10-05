@@ -1102,6 +1102,13 @@ int main(int argc, char** argv) {
           usage();
         }
         g_incl_searchpath.push_back(arg);
+      } else if (strcmp(arg, "-gen") == 0) {
+        arg = argv[++i];
+        if (arg == NULL) {
+          fprintf(stderr, "Missing generator specification\n");
+          usage();
+        }
+        generator_strings.push_back(arg);
       } else if ((strcmp(arg, "-o") == 0) || (strcmp(arg, "-out") == 0)) {
         out_path_is_absolute = (strcmp(arg, "-out") == 0) ? true : false;
         arg = argv[++i];
