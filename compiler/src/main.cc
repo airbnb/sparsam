@@ -1043,6 +1043,7 @@ int main(int argc, char** argv) {
   int i;
   std::string out_path;
   bool out_path_is_absolute = false;
+  bool namespaced_option = false;
 
   // Setup time string
   time_t now = time(NULL);
@@ -1104,6 +1105,7 @@ int main(int argc, char** argv) {
         g_incl_searchpath.push_back(arg);
       } else if (strcmp(arg, "-namespaced") == 0) {
         generator_strings.push_back("ruby:namespaced");
+        namespaced_option = true;
       } else if ((strcmp(arg, "-o") == 0) || (strcmp(arg, "-out") == 0)) {
         out_path_is_absolute = (strcmp(arg, "-out") == 0) ? true : false;
         arg = argv[++i];
@@ -1252,7 +1254,9 @@ int main(int argc, char** argv) {
     // Reset yylineno for the heck of it.  Use 1 instead of 0 because
     // That is what shows up during argument parsing.
     yylineno = 1;
-    generator_strings.push_back("ruby");
+    if (!namespaced_option) {
+      generator_strings.push_back("ruby");
+    }
     // Generate it!
     generate(program, generator_strings);
     delete program;
