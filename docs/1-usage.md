@@ -7,6 +7,11 @@ except that `--gen` switch is not supported (since we are only generating files 
 ./sparsam-gen -o <out-dir> <schema.thrift>
 ```
 
+If you want ruby files generated in idiomatic directories, you can run:
+```
+./sparsam-gen -namespaced -o <out-dir> <schema.thrift>
+```
+
 ## Serialization & Deserialization {#serialization}
 
 ```ruby
