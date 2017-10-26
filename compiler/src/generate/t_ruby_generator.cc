@@ -414,11 +414,12 @@ void t_ruby_generator::generate_rb_struct(
   generate_rdoc(out, tstruct);
   if (tstruct->is_union()) {
     out.indent() << "class " << type_name(tstruct)   << " < ::Sparsam::Union" << endl;
-    out.indent_up();
+  } else if (tstruct->is_xception()) {
+    out.indent() << "class " << type_name(tstruct)   << " < ::Sparsam::Exception" << endl;
   } else {
     out.indent() << "class " << type_name(tstruct)   << " < ::Sparsam::Struct" << endl;
-    out.indent_up();
   }
+  out.indent_up();
 
   // These are now handled by meta programming in ruby
   //generate_initialize(out, tstruct);
@@ -427,7 +428,9 @@ void t_ruby_generator::generate_rb_struct(
   //generate_field_accessors(out, tstruct);
   //generate_reader(out, tstruct);
   //generate_writer(out, tstruct);
-  out.indent() << "init_thrift_struct(self)" << endl;
+  if (!tstruct->is_xception()) {
+    out.indent() << "init_thrift_struct(self)" << endl;
+  }
 
   out.indent_down();
   out.indent() << "end" << endl << endl;
