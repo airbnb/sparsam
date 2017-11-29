@@ -415,6 +415,9 @@ void t_ruby_generator::generate_rb_struct(
   if (tstruct->is_union()) {
     out.indent() << "class " << type_name(tstruct)   << " < ::Sparsam::Union" << endl;
     out.indent_up();
+  } else if (tstruct->is_xception()) {
+    out.indent() << "class " << type_name(tstruct)   << " < ::Sparsam::ApplicationException" << endl;
+    out.indent_up();
   } else {
     out.indent() << "class " << type_name(tstruct)   << " < ::Sparsam::Struct" << endl;
     out.indent_up();
