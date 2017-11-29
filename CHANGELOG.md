@@ -1,4 +1,7 @@
 # 0.2.2
+* Fix base class issues for IDL defined Exceptions
+
+# 0.2.2
 * Handle eigenclasses correctly in serializer
 
 # 0.2.1

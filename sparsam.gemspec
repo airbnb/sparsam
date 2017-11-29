@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = 'sparsam'
-  s.version     = '0.2.2'
+  s.version     = '0.2.3'
   s.authors     = ['Airbnb Thrift Developers']
   s.email       = ['foundation.performance-eng@airbnb.com']
   s.homepage    = 'http://thrift.apache.org'
