@@ -81,3 +81,12 @@ struct EveryType {
   14: optional US a_struct
   15: optional UN a_union
 }
+
+exception SimpleException {
+  1: optional string message
+}
+
+exception WithFieldsException {
+  1: optional i64 an_i64
+  2: optional string message
+}

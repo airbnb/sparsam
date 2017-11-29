@@ -1,8 +1,10 @@
 # -*- coding: UTF-8 -*-
-require 'sparsam/base_class'
+require 'sparsam/base_type'
 
 module Sparsam
-  class Union < ::Sparsam::BaseClass
+  class Union
+    include ::Sparsam::BaseType
+
     def initialize(name = nil, value = nil)
       if name
         if name.is_a? Hash

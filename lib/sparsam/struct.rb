@@ -1,9 +1,12 @@
 # -*- coding: UTF-8 -*-
-require 'sparsam/base_class'
+require 'sparsam/base_type'
+require 'sparsam/base_struct'
 
 module Sparsam
-  class Struct < ::Sparsam::BaseClass
+  class Struct
+    include ::Sparsam::BaseType
     include ::Sparsam::StructInitialization
+    include ::Sparsam::BaseStruct
 
     def ==(other)
       return true if other.equal?(self)
@@ -15,31 +18,5 @@ module Sparsam
       end
     end
     alias_method :eql?, :==
-
-    def self.field_accessor(klass, field_key, field_info)
-      field_name = field_info[:name]
-      klass.class_eval(<<-EOF, __FILE__, __LINE__)
-        attr_accessor :'#{field_name}'
-      EOF
-    end
-
-    private
-
-    def assign_defaults(defaults)
-      defaults.each do |name, default_value|
-        accessors = name_to_accessors(name)
-        send(accessors.writer, default_value)
-      end
-    end
-
-    def assign_from_arg(d)
-      d.each do |name, value|
-        accessors = name_to_accessors(name)
-        unless accessors
-          raise Sparsam::Exception, "Unknown key given to #{self.class}.new: #{name}"
-        end
-        send(accessors.writer, value)
-      end
-    end
   end
 end

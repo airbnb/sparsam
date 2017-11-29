@@ -460,5 +460,27 @@ describe 'Sparsam' do
 
       expect { data.serialize }.not_to raise_error
     end
+
+    describe 'ApplicationException' do
+      it 'creates exceptions that can be raised' do
+        e = SimpleException.new(message: "Oops")
+
+        e.message.should eq("Oops")
+
+        expect { raise e }.to raise_error(SimpleException, "Oops")
+      end
+
+      it 'serializes and reads exceptions' do
+        e = SimpleException.new(message: "Oops")
+
+        data = e.serialize
+
+        e2 = Sparsam::Deserializer.deserialize(SimpleException, data)
+
+        e2.message.should eq("Oops")
+
+        expect { raise e2 }.to raise_error(SimpleException, "Oops")
+      end
+    end
   end
 end
