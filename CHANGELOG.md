@@ -1,4 +1,4 @@
-# 0.2.2
+# 0.2.3
 * Fix base class issues for IDL defined Exceptions
 
 # 0.2.2
