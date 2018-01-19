@@ -4,7 +4,7 @@ dist: trusty
 before_install:
   - sudo apt-get update
   - sudo apt-get install automake bison flex g++ git libboost1.55-all-dev libevent-dev libssl-dev libtool make pkg-config -y
-  - wget http://mirror.reverse.net/pub/apache/thrift/0.10.0/thrift-0.10.0.tar.gz -O /tmp/thrift.tar.gz
+  - wget http://mirror.reverse.net/pub/apache/thrift/0.11.0/thrift-0.11.0.tar.gz -O /tmp/thrift.tar.gz
   - bash ./travis-build-thrift.sh
   - gem install bundler --no-document
 

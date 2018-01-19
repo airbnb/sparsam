@@ -39,7 +39,7 @@ void initialize_runtime_constants();
 #ifdef __cplusplus
 } // end extern "C"
 
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 #include <map>
 #include <string>
 #include <thrift/protocol/TProtocol.h>
@@ -76,8 +76,8 @@ typedef spp::sparse_hash_map<VALUE, FieldInfoMap *> KlassFieldsCache;
 class ThriftSerializer {
 public:
   ThriftSerializer(){};
-  boost::shared_ptr< ::apache::thrift::protocol::TProtocol > tprot;
-  boost::shared_ptr< ::apache::thrift::transport::TMemoryBuffer > tmb;
+  apache::thrift::stdcxx::shared_ptr< ::apache::thrift::protocol::TProtocol > tprot;
+  apache::thrift::stdcxx::shared_ptr< ::apache::thrift::transport::TMemoryBuffer > tmb;
 
   VALUE readStruct(VALUE klass);
   void writeStruct(VALUE klass, VALUE data);
