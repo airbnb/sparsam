@@ -1,3 +1,6 @@
+# 0.2.4
+* Include ruby headers as C in extension
+
 # 0.2.3
 * Fix base class issues for IDL defined Exceptions
 
