@@ -1,6 +1,7 @@
-#include "serializer.h"
 #include "stdio.h"
 #include <ruby.h>
+#include <ruby/intern.h>
+#include "serializer.h"
 
 VALUE Sparsam = Qnil;
 VALUE static_zero_array;

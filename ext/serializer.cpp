@@ -1,3 +1,7 @@
+extern "C" {
+#include <ruby.h>
+#include <ruby/intern.h>
+}
 #include "serializer.h"
 #include <functional>
 #include <map>
