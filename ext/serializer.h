@@ -1,6 +1,4 @@
 #ifndef __SERIALIZER_H__
-#include <ruby.h>
-#include <ruby/intern.h>
 #ifndef NUM2SHORT
 #define NUM2SHORT NUM2INT
 #endif
