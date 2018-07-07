@@ -79,6 +79,14 @@ describe 'Sparsam' do
       ids.size.should == 0
     end
 
+    it "can deserialize unions" do
+      data = UN.new({ :id_i32 => 1000 })
+      result = data.serialize
+      data2 = Sparsam::Deserializer.deserialize(UN, result)
+      Sparsam.validate(UN, data2, Sparsam::RECURSIVE).should == true
+      data2.id_i32.should == 1000
+    end
+
     it "can handle passing in initialization data" do
       init = { "id_i32" => 10, "id_s" => "woohoo blackbird" }
       data = SS.new(init)

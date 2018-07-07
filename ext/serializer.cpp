@@ -658,6 +658,17 @@ VALUE serializer_readStruct(VALUE self, VALUE klass) {
   catch_thrift_and_reraise();
 }
 
+VALUE serializer_readUnion(VALUE self, VALUE klass) {
+  watch_for_texcept() get_ts();
+  string cname;
+  VALUE ret;
+  ts->tprot->readStructBegin(cname);
+  ret = ts->readUnion(klass);
+  ts->tprot->readStructEnd();
+  return ret;
+  catch_thrift_and_reraise();
+}
+
 #define R_FIX_TO_TTYPE(x) (static_cast<TType>(FIX2INT(x)))
 
 FieldInfoMap *FindOrCreateFieldInfoMap(VALUE klass) {

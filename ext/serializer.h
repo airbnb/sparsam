@@ -24,6 +24,7 @@ void serializer_init(void *serializer, int protocol, void *str_arg1,
                      uint32_t len);
 
 VALUE serializer_readStruct(VALUE self, VALUE klass);
+VALUE serializer_readUnion(VALUE self, VALUE klass);
 VALUE serializer_writeStruct(VALUE self, VALUE klass, VALUE data);
 
 VALUE cache_fields(VALUE self, VALUE klass);
@@ -78,10 +79,10 @@ public:
   boost::shared_ptr< ::apache::thrift::transport::TMemoryBuffer > tmb;
 
   VALUE readStruct(VALUE klass);
+  VALUE readUnion(VALUE klass);
   void writeStruct(VALUE klass, VALUE data);
 
 private:
-  VALUE readUnion(VALUE klass);
   VALUE readAny(TType ttype, FieldInfo *field_info);
   void writeAny(TType ttype, FieldInfo *field_info, VALUE data, VALUE outer_struct, VALUE field_sym);
   void skip_n_type(uint32_t n, TType ttype);

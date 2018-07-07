@@ -77,6 +77,7 @@ void Init_sparsam_native() {
   rb_define_method(SparsamSerializer, "initialize", initialize, 2);
   rb_define_method(SparsamSerializer, "serialize", serializer_writeStruct, 2);
   rb_define_method(SparsamSerializer, "deserialize", serializer_readStruct, 1);
+  rb_define_method(SparsamSerializer, "deserializeUnion", serializer_readUnion, 1);
   rb_define_const(Sparsam, "CompactProtocol", INT2FIX(compact));
   rb_define_const(Sparsam, "BinaryProtocol", INT2FIX(binary));
   rb_define_const(Sparsam, "UNION", INT2FIX(t_union));
