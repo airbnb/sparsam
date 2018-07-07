@@ -1,12 +1,27 @@
 language: ruby
-sudo: enabled
+sudo: false
 dist: trusty
+
+cache:
+  ccache: true
+  directories:
+    - $HOME/thrift
+
+env:
+  global:
+    - CC="ccache gcc"
+    - CXX="ccache g++"
+    - THRIFT_SHA256SUM="2289d02de6e8db04cbbabb921aeb62bfe3098c4c83f36eec6c31194301efa10b  thrift-0.10.0.tar.gz"
+    - THRIFT_URL="http://mirror.reverse.net/pub/apache/thrift/0.10.0/thrift-0.10.0.tar.gz"
+    - THRIFT_FILE="thrift-0.10.0.tar.gz"
+    - THRIFT_DIR="thrift-0.10.0"
+
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install automake bison flex g++ git libboost1.55-all-dev libevent-dev libssl-dev libtool make pkg-config -y
-  - wget http://mirror.reverse.net/pub/apache/thrift/0.10.0/thrift-0.10.0.tar.gz -O /tmp/thrift.tar.gz
+  # don't do this in prod
   - bash ./travis-build-thrift.sh
-  - gem install bundler --no-document
+  - export LIBRARY_PATH="$HOME/thrift/$THRIFT_DIR/lib:$LIBRARY_PATH"
+  - export LD_LIBRARY_PATH="$HOME/thrift/$THRIFT_DIR/lib:$LD_LIBRARY_PATH"
+  - export CPATH="$HOME/thrift/$THRIFT_DIR/lib/cpp/src:$HOME/thrift/$THRIFT_DIR:$CPATH"
 
 rvm:
   - 1.9.3
@@ -14,7 +29,23 @@ rvm:
   - 2.2.1
   - 2.3.0
   - 2.4.0
+
 script:
   # Please add to Rakefile instead of this section.
   - bundle exec rake
   - bundle exec rubocop
+
+addons:
+  apt:
+    packages:
+      - automake
+      - bison 
+      - flex 
+      - g++ 
+      - git 
+      - libboost1.55-all-dev 
+      - libevent-dev 
+      - libssl-dev 
+      - libtool 
+      - make 
+      - pkg-config
