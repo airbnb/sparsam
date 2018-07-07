@@ -1,3 +1,6 @@
+# 0.2.5
+* Fix handling of top-level objects that are structs
+
 # 0.2.4
 * Include ruby headers as C in extension
 
