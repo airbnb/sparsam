@@ -8,12 +8,13 @@ cache:
     - $HOME/thrift
 
 env:
-  - CC="ccache gcc"
-  - CXX="ccache g++"
-  - THRIFT_SHA256SUM="2289d02de6e8db04cbbabb921aeb62bfe3098c4c83f36eec6c31194301efa10b  thrift-0.10.0.tar.gz"
-  - THRIFT_URL="http://mirror.reverse.net/pub/apache/thrift/0.10.0/thrift-0.10.0.tar.gz"
-  - THRIFT_FILE="thrift-0.10.0.tar.gz"
-  - THRIFT_DIR="thrift-0.10.0"
+  global:
+    - CC="ccache gcc"
+    - CXX="ccache g++"
+    - THRIFT_SHA256SUM="2289d02de6e8db04cbbabb921aeb62bfe3098c4c83f36eec6c31194301efa10b  thrift-0.10.0.tar.gz"
+    - THRIFT_URL="http://mirror.reverse.net/pub/apache/thrift/0.10.0/thrift-0.10.0.tar.gz"
+    - THRIFT_FILE="thrift-0.10.0.tar.gz"
+    - THRIFT_DIR="thrift-0.10.0"
 
 before_install:
   # don't do this in prod
