@@ -48,6 +48,17 @@ void initialize_runtime_constants();
 
 using ::apache::thrift::protocol::TType;
 
+// transposed from:
+// https://github.com/apache/thrift/blob/0.10.0/lib/cpp/src/thrift/protocol/TProtocol.h#L176
+// with: https://gist.github.com/andyfangdz/d4d52daa9f8a75223e76e92657036bb0
+// fun fact: it's not sorted there
+std::string TTypeNames[] = {
+    "T_STOP",   "T_VOID",    "T_BOOL", "T_BYTE or T_I08",
+    "T_DOUBLE", "T_UNKNOWN", "T_I16",  "T_UNKNOWN",
+    "T_I32",    "T_U64",     "T_I64",  "T_STRING or T_UTF7",
+    "T_STRUCT", "T_MAP",     "T_SET",  "T_LIST",
+    "T_UTF8",   "T_UTF16"};
+
 typedef uint16_t FieldIdIndex;
 typedef uint16_t KlassIndex;
 
@@ -75,8 +86,10 @@ typedef spp::sparse_hash_map<VALUE, FieldInfoMap*> KlassFieldsCache;
 class ThriftSerializer {
  public:
   ThriftSerializer(){};
+  // clang-format off
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol > tprot;
   boost::shared_ptr< ::apache::thrift::transport::TMemoryBuffer > tmb;
+  // clang-format on
 
   VALUE readStruct(VALUE klass);
   VALUE readUnion(VALUE klass);
