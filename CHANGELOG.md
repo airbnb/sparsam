@@ -2,7 +2,7 @@
 
 ## 0.2.5
 
-- Fix handling of top-level objects that are structs
+- Fix handling of top-level objects that are unions
 
 ## 0.2.4
 
