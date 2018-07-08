@@ -358,8 +358,9 @@ VALUE ThriftSerializer::readStruct(VALUE klass) {
     if (typeId != fieldBegin.ftype) {
       raise_exc_with_struct_and_field_names(
           SparsamTypeMismatchError,
-          rb_sprintf("Mismatched type (definition: %d, found: %d)",
-                     fieldBegin.ftype, typeId),
+          rb_sprintf("Mismatched type (definition: %s, found: %s)",
+                     TTypeNames[fieldBegin.ftype].c_str(),
+                     TTypeNames[typeId].c_str()),
           klass, fieldInfo->symName);
     }
 
