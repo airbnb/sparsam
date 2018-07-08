@@ -251,6 +251,20 @@ describe 'Sparsam' do
       e.message.should include("US", "EveryType")
     end
 
+    it "includes additional information on deserializing mismatched types" do
+      data = NotSS.new
+      data.id_s = "not an i32"
+
+      serialized = data.serialize
+
+      begin
+        Sparsam::Deserializer.deserialize(SS, serialized)
+      rescue Sparsam::TypeMismatch => exception
+        e = exception
+      end
+      e.message.should include("T_I32", "T_STRING")
+    end
+
     it "will throw errors when given junk data" do
       expect {
         Sparsam::Deserializer.deserialize(SS, "wolololololol")
