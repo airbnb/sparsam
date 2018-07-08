@@ -20,9 +20,7 @@ enum ValidateStrictness { normal = 0, strict = 1, recursive = 2 };
 
 void serializer_free(void* data);
 void* serializer_create();
-void serializer_init(void* serializer,
-                     int protocol,
-                     void* str_arg1,
+void serializer_init(void* serializer, int protocol, void* str_arg1,
                      uint32_t len);
 
 VALUE serializer_readStruct(VALUE self, VALUE klass);
@@ -31,9 +29,7 @@ VALUE serializer_writeStruct(VALUE self, VALUE klass, VALUE data);
 
 VALUE cache_fields(VALUE self, VALUE klass);
 
-VALUE serializer_validate(VALUE self,
-                          VALUE klass,
-                          VALUE data,
+VALUE serializer_validate(VALUE self, VALUE klass, VALUE data,
                           VALUE strictness);
 
 void initialize_constants();
@@ -88,11 +84,8 @@ class ThriftSerializer {
 
  private:
   VALUE readAny(TType ttype, FieldInfo* field_info);
-  void writeAny(TType ttype,
-                FieldInfo* field_info,
-                VALUE data,
-                VALUE outer_struct,
-                VALUE field_sym);
+  void writeAny(TType ttype, FieldInfo* field_info, VALUE data,
+                VALUE outer_struct, VALUE field_sym);
   void skip_n_type(uint32_t n, TType ttype);
   void skip_n_pair(uint32_t n, TType type_a, TType type_b);
 };

@@ -51,12 +51,10 @@ VALUE SetClass;
 KlassFieldsCache klassCache;  // consider the memory leaked.
 std::unordered_set<VALUE> unions;
 
-void* serializer_create() {
-  return (void*)(new ThriftSerializer());
-}
+void *serializer_create() { return (void *)(new ThriftSerializer()); }
 
-void serializer_free(void* data) {
-  ThriftSerializer* ts = (ThriftSerializer*)(data);
+void serializer_free(void *data) {
+  ThriftSerializer *ts = (ThriftSerializer *)(data);
   delete ts;
 }
 
@@ -95,20 +93,18 @@ void initialize_runtime_constants() {
   SetClass = rb_const_get_at(rb_cObject, rb_intern("Set"));
 }
 
-void serializer_init(void* serializer,
-                     int protocol,
-                     void* str_arg1,
+void serializer_init(void *serializer, int protocol, void *str_arg1,
                      uint32_t len) {
   using ::apache::thrift::protocol::TBinaryProtocol;
   using ::apache::thrift::protocol::TCompactProtocol;
   using ::apache::thrift::protocol::TProtocol;
   using ::boost::shared_ptr;
 
-  ThriftSerializer* ts = (ThriftSerializer*)(serializer);
+  ThriftSerializer *ts = (ThriftSerializer *)(serializer);
   shared_ptr<TMemoryBuffer> strBuffer;
   if (str_arg1 != NULL) {
     strBuffer = boost::make_shared<TMemoryBuffer>(
-        (uint8_t*)str_arg1, len, TMemoryBuffer::TAKE_OWNERSHIP);
+        (uint8_t *)str_arg1, len, TMemoryBuffer::TAKE_OWNERSHIP);
   } else {
     strBuffer = boost::make_shared<TMemoryBuffer>();
   }
@@ -124,9 +120,9 @@ void serializer_init(void* serializer,
 }
 
 #define get_ts()                          \
-  void* self_data = NULL;                 \
+  void *self_data = NULL;                 \
   Data_Get_Struct(self, void, self_data); \
-  ThriftSerializer* ts = (ThriftSerializer*)(self_data);
+  ThriftSerializer *ts = (ThriftSerializer *)(self_data);
 
 #define watch_for_texcept() try {
 #define catch_thrift_and_reraise()                \
@@ -136,11 +132,11 @@ void serializer_init(void* serializer,
     return Qnil;                                  \
   }
 
-static inline VALUE make_ruby_string(const string& val) {
+static inline VALUE make_ruby_string(const string &val) {
   return rb_enc_str_new(val.c_str(), val.size(), rb_utf8_encoding());
 }
 
-static inline VALUE make_ruby_binary(const string& val) {
+static inline VALUE make_ruby_binary(const string &val) {
   return rb_str_new(val.c_str(), val.size());
 }
 
@@ -170,18 +166,14 @@ static inline long raise_type_mismatch_as_value(VALUE outer_struct,
   return 0;
 }
 
-static inline void Sparsam_Check_Type(VALUE x,
-                                      int t,
-                                      VALUE outer_struct,
+static inline void Sparsam_Check_Type(VALUE x, int t, VALUE outer_struct,
                                       VALUE field_sym) {
   if (!(RB_TYPE_P(x, t))) {
     raise_type_mismatch(outer_struct, field_sym);
   }
 }
 
-static inline VALUE make_ruby_bool(bool val) {
-  return val ? Qtrue : Qfalse;
-}
+static inline VALUE make_ruby_bool(bool val) { return val ? Qtrue : Qfalse; }
 
 void ThriftSerializer::skip_n_type(uint32_t n, TType ttype) {
   for (uint32_t i = 0; i < n; i++) {
@@ -207,7 +199,7 @@ void ThriftSerializer::skip_n_pair(uint32_t n, TType type_a, TType type_b) {
     break;                                               \
   }
 
-VALUE ThriftSerializer::readAny(TType ttype, FieldInfo* field_info) {
+VALUE ThriftSerializer::readAny(TType ttype, FieldInfo *field_info) {
   VALUE ret = Qnil;
   switch (ttype) {
     // Handle all the non-container types by marco
@@ -323,7 +315,7 @@ VALUE ThriftSerializer::readStruct(VALUE klass) {
   string cname;
   FieldBegin fieldBegin;
   TType typeId;
-  FieldInfo* fieldInfo;
+  FieldInfo *fieldInfo;
   VALUE ret = rb_class_new_instance(0, NULL, klass);  // ret = &klass.new
   auto fields = FindOrCreateFieldInfoMap(klass);
 
@@ -405,7 +397,7 @@ VALUE ThriftSerializer::readUnion(VALUE klass) {
 // https://stackoverflow.com/a/18889029/4944625
 // explicit cast to work with signature: (int (*)(...))
 #define HASH_FOREACH_BEGIN(hash, ...) \
-  void* _args[] = {__VA_ARGS__};      \
+  void *_args[] = {__VA_ARGS__};      \
   rb_hash_foreach(hash, (int (*)(ANYARGS))(+[](VALUE k, VALUE v, VALUE args) { \
     void **argv = (void **) args;
 #define HASH_FOREACH_RET() return (int)ST_CONTINUE;
@@ -452,8 +444,7 @@ static inline long raise_bignum_range_error_as_value() {
        ? CONVERT(actual)       \
        : raise_type_mismatch_as_value(outer_struct, field_sym))
 
-static inline bool convertBool(VALUE actual,
-                               VALUE outer_struct,
+static inline bool convertBool(VALUE actual, VALUE outer_struct,
                                VALUE field_sym) {
   switch (actual) {
     case Qtrue:
@@ -487,10 +478,8 @@ static inline char byte_convert(VALUE x) {
   return 0;
 }
 
-void ThriftSerializer::writeAny(TType ttype,
-                                FieldInfo* field_info,
-                                VALUE actual,
-                                VALUE outer_struct,
+void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
+                                VALUE actual, VALUE outer_struct,
                                 VALUE field_sym) {
   switch (ttype) {
     HANDLE_TYPE(I16, I16, CONVERT_FIXNUM(SHORT_CONVERT))
@@ -551,10 +540,10 @@ void ThriftSerializer::writeAny(TType ttype,
       this->tprot->writeMapBegin(keyTType, valueTType,
                                  static_cast<size_t>(RHASH_SIZE(actual)));
       HASH_FOREACH_BEGIN(actual, this, field_info, &outer_struct, &field_sym)
-      ThriftSerializer* that = (ThriftSerializer*)argv[0];
-      FieldInfo* field_info = (FieldInfo*)argv[1];
-      VALUE* outer_struct = (VALUE*)argv[2];
-      VALUE* field_sym = (VALUE*)argv[3];
+      ThriftSerializer *that = (ThriftSerializer *)argv[0];
+      FieldInfo *field_info = (FieldInfo *)argv[1];
+      VALUE *outer_struct = (VALUE *)argv[2];
+      VALUE *field_sym = (VALUE *)argv[3];
       that->writeAny(field_info->keyType->ftype, field_info->keyType, k,
                      *outer_struct, *field_sym);
       that->writeAny(field_info->elementType->ftype, field_info->elementType, v,
@@ -585,7 +574,7 @@ void ThriftSerializer::writeAny(TType ttype,
 
 static bool checkRequiredFields(VALUE klass, VALUE data) {
   auto fields = FindOrCreateFieldInfoMap(klass);
-  for (auto const& entry : *fields) {
+  for (auto const &entry : *fields) {
     if (!entry.second->isOptional) {
       VALUE val = rb_ivar_get(data, entry.second->ivarName);
       if (NIL_P(val)) {
@@ -603,14 +592,14 @@ static bool checkRequiredFields(VALUE klass, VALUE data) {
 void ThriftSerializer::writeStruct(VALUE klass, VALUE data) {
   static const string cname = "";
   FieldBegin fieldBegin;
-  FieldInfo* fieldInfo;
+  FieldInfo *fieldInfo;
   auto fields = FindOrCreateFieldInfoMap(klass);
 
   if (!checkRequiredFields(klass, data)) {
     return;
   }
 
-  for (auto const& entry : *fields) {
+  for (auto const &entry : *fields) {
     fieldBegin.fid = entry.first;
     fieldInfo = entry.second;
     fieldBegin.ftype = fieldInfo->ftype;
@@ -676,7 +665,7 @@ VALUE serializer_readUnion(VALUE self, VALUE klass) {
 
 #define R_FIX_TO_TTYPE(x) (static_cast<TType>(FIX2INT(x)))
 
-FieldInfoMap* FindOrCreateFieldInfoMap(VALUE klass) {
+FieldInfoMap *FindOrCreateFieldInfoMap(VALUE klass) {
   auto iter = klassCache.find(klass);
   if (iter == klassCache.end()) {
     if (RTEST(rb_class_inherited_p(klass, klass_for_union))) {
@@ -707,8 +696,8 @@ VALUE field_name_to_sym(VALUE str_name) {
 }
 
 // each FieldInfoMap has multiple FieldInfos
-FieldInfo* CreateFieldInfo(VALUE field_map_entry) {
-  FieldInfo* fieldInfo = new FieldInfo();
+FieldInfo *CreateFieldInfo(VALUE field_map_entry) {
+  FieldInfo *fieldInfo = new FieldInfo();
   fieldInfo->ftype =
       R_FIX_TO_TTYPE(rb_hash_aref(field_map_entry, sym_for_type));
   fieldInfo->isOptional =
@@ -748,12 +737,12 @@ FieldInfo* CreateFieldInfo(VALUE field_map_entry) {
 }
 
 // each klass has a FieldInfoMap
-FieldInfoMap* CreateFieldInfoMap(VALUE klass) {
-  FieldInfoMap* fieldMap = new FieldInfoMap();
+FieldInfoMap *CreateFieldInfoMap(VALUE klass) {
+  FieldInfoMap *fieldMap = new FieldInfoMap();
   VALUE field_map = rb_const_get_at(klass, intern_for_FIELDS);
 
   HASH_FOREACH_BEGIN(field_map, fieldMap)
-  FieldInfoMap* fieldMap = (FieldInfoMap*)argv[0];
+  FieldInfoMap *fieldMap = (FieldInfoMap *)argv[0];
   (*fieldMap)[FIX2INT(k)] = CreateFieldInfo(v);
   HASH_FOREACH_END()
   return fieldMap;

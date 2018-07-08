@@ -11,9 +11,7 @@ ID intern_for_DEFAULT_VALUES;
 ID intern_for_assign_defaults;
 ID intern_for_assign_from_arg;
 
-static void deallocate(void* data) {
-  serializer_free(data);
-}
+static void deallocate(void* data) { serializer_free(data); }
 
 static VALUE allocate(VALUE klass) {
   void* data = serializer_create();
