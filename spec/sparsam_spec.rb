@@ -238,7 +238,7 @@ describe 'Sparsam' do
         e = exception
       end
       e.message.should include("T_I32", "String")
-      
+
       data = EveryType.new
       data.a_struct = EveryType.new
 
