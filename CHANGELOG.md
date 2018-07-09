@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.6
+
+- Include additional information in type mismatch errors
+
 ## 0.2.5
 
 - Fix handling of top-level objects that are unions
