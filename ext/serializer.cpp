@@ -154,22 +154,41 @@ static void raise_exc_with_struct_and_field_names(VALUE exc_class,
   rb_exc_raise(e);
 }
 
-static void raise_type_mismatch(VALUE outer_struct, VALUE field_sym) {
-  raise_exc_with_struct_and_field_names(SparsamTypeMismatchError,
-                                        rb_str_new2("Mismatched type"),
+static void raise_type_mismatch(VALUE outer_struct, VALUE field_sym,
+                                const char *expected, VALUE actual) {
+  VALUE actual_name = rb_class_name(CLASS_OF(actual));
+  VALUE msg = rb_sprintf(
+      "Mismatched type (expected to be compatible with: %s, found: %s)",
+      expected, RSTRING_PTR(actual_name));
+
+  raise_exc_with_struct_and_field_names(SparsamTypeMismatchError, msg,
                                         CLASS_OF(outer_struct), field_sym);
 }
 
+static void raise_type_mismatch(VALUE outer_struct, VALUE field_sym, int ttype,
+                                VALUE actual) {
+  raise_type_mismatch(outer_struct, field_sym, TTypeName((size_t)ttype).c_str(),
+                      actual);
+}
+
+static void raise_type_mismatch(VALUE outer_struct, VALUE field_sym,
+                                VALUE klass, VALUE actual) {
+  VALUE expected_name = rb_class_name(klass);
+  raise_type_mismatch(outer_struct, field_sym, RSTRING_PTR(expected_name),
+                      actual);
+}
+
 static inline long raise_type_mismatch_as_value(VALUE outer_struct,
-                                                VALUE field_sym) {
-  raise_type_mismatch(outer_struct, field_sym);
+                                                VALUE field_sym, int ttype,
+                                                VALUE actual) {
+  raise_type_mismatch(outer_struct, field_sym, ttype, actual);
   return 0;
 }
 
 static inline void Sparsam_Check_Type(VALUE x, int t, VALUE outer_struct,
                                       VALUE field_sym) {
   if (!(RB_TYPE_P(x, t))) {
-    raise_type_mismatch(outer_struct, field_sym);
+    raise_type_mismatch(outer_struct, field_sym, t, x);
   }
 }
 
@@ -339,8 +358,9 @@ VALUE ThriftSerializer::readStruct(VALUE klass) {
     if (typeId != fieldBegin.ftype) {
       raise_exc_with_struct_and_field_names(
           SparsamTypeMismatchError,
-          rb_sprintf("Mismatched type (definition: %d, found: %d)",
-                     fieldBegin.ftype, typeId),
+          rb_sprintf("Mismatched type (definition: %s, found: %s)",
+                     TTypeName(fieldBegin.ftype).c_str(),
+                     TTypeName(typeId).c_str()),
           klass, fieldInfo->symName);
     }
 
@@ -419,19 +439,21 @@ static inline long raise_bignum_range_error_as_value() {
   return 0;
 }
 
-#define CONVERT_FIXNUM(CONVERT)                     \
-  ((FIXNUM_P(actual))                               \
-       ? CONVERT(actual)                            \
-       : ((RB_TYPE_P(actual, T_BIGNUM))             \
-              ? raise_bignum_range_error_as_value() \
-              : raise_type_mismatch_as_value(outer_struct, field_sym)))
+#define CONVERT_FIXNUM(CONVERT, INTENDED)                             \
+  ((FIXNUM_P(actual))                                                 \
+       ? CONVERT(actual)                                              \
+       : ((RB_TYPE_P(actual, T_BIGNUM))                               \
+              ? raise_bignum_range_error_as_value()                   \
+              : raise_type_mismatch_as_value(outer_struct, field_sym, \
+                                             INTENDED, actual)))
 
-#define CONVERT_I64                     \
-  ((FIXNUM_P(actual))                   \
-       ? (LONG_LONG)FIX2LONG(actual)    \
-       : ((RB_TYPE_P(actual, T_BIGNUM)) \
-              ? rb_big2ll(actual)       \
-              : raise_type_mismatch_as_value(outer_struct, field_sym)))
+#define CONVERT_I64                                                   \
+  ((FIXNUM_P(actual))                                                 \
+       ? (LONG_LONG)FIX2LONG(actual)                                  \
+       : ((RB_TYPE_P(actual, T_BIGNUM))                               \
+              ? rb_big2ll(actual)                                     \
+              : raise_type_mismatch_as_value(outer_struct, field_sym, \
+                                             protocol::T_I64, actual)))
 
 #ifdef RB_FLOAT_TYPE_P
 #define FLOAT_TYPE_P(x) RB_FLOAT_TYPE_P(x)
@@ -439,10 +461,11 @@ static inline long raise_bignum_range_error_as_value() {
 #define FLOAT_TYPE_P(x) RB_TYPE_P(x, T_FLOAT)
 #endif
 
-#define CONVERT_FLOAT(CONVERT) \
-  ((FLOAT_TYPE_P(actual))      \
-       ? CONVERT(actual)       \
-       : raise_type_mismatch_as_value(outer_struct, field_sym))
+#define CONVERT_FLOAT(CONVERT)                                 \
+  ((FLOAT_TYPE_P(actual))                                      \
+       ? CONVERT(actual)                                       \
+       : raise_type_mismatch_as_value(outer_struct, field_sym, \
+                                      protocol::T_DOUBLE, actual))
 
 static inline bool convertBool(VALUE actual, VALUE outer_struct,
                                VALUE field_sym) {
@@ -452,7 +475,7 @@ static inline bool convertBool(VALUE actual, VALUE outer_struct,
     case Qfalse:
       return false;
     default:
-      raise_type_mismatch(outer_struct, field_sym);
+      raise_type_mismatch(outer_struct, field_sym, protocol::T_BOOL, actual);
   }
 
   /* unreachable */
@@ -482,12 +505,12 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
                                 VALUE actual, VALUE outer_struct,
                                 VALUE field_sym) {
   switch (ttype) {
-    HANDLE_TYPE(I16, I16, CONVERT_FIXNUM(SHORT_CONVERT))
-    HANDLE_TYPE(I32, I32, CONVERT_FIXNUM(FIX2INT))
+    HANDLE_TYPE(I16, I16, CONVERT_FIXNUM(SHORT_CONVERT, protocol::T_I16))
+    HANDLE_TYPE(I32, I32, CONVERT_FIXNUM(FIX2INT, protocol::T_I32))
     HANDLE_TYPE(I64, I64, CONVERT_I64)
     HANDLE_TYPE(BOOL, Bool, convertBool(actual, outer_struct, field_sym))
     HANDLE_TYPE(DOUBLE, Double, CONVERT_FLOAT(NUM2DBL))
-    HANDLE_TYPE(BYTE, Byte, CONVERT_FIXNUM(byte_convert))
+    HANDLE_TYPE(BYTE, Byte, CONVERT_FIXNUM(byte_convert, protocol::T_BYTE))
 
     case protocol::T_STRING: {
       Sparsam_Check_Type(actual, T_STRING, outer_struct, field_sym);
@@ -517,7 +540,7 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
 
     case protocol::T_SET: {
       if (rb_class_real(CLASS_OF(actual)) != SetClass) {
-        raise_type_mismatch(outer_struct, field_sym);
+        raise_type_mismatch(outer_struct, field_sym, protocol::T_SET, actual);
       }
 
       VALUE ary = rb_funcall(actual, intern_for_to_a, 0);
@@ -555,7 +578,7 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
 
     case protocol::T_STRUCT: {
       if (rb_class_real(CLASS_OF(actual)) != field_info->klass) {
-        raise_type_mismatch(outer_struct, field_sym);
+        raise_type_mismatch(outer_struct, field_sym, field_info->klass, actual);
       }
 
       static const string cname = "";
