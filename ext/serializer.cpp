@@ -167,8 +167,8 @@ static void raise_type_mismatch(VALUE outer_struct, VALUE field_sym,
 
 static void raise_type_mismatch(VALUE outer_struct, VALUE field_sym, int ttype,
                                 VALUE actual) {
-  raise_type_mismatch(outer_struct, field_sym,
-                      TTypeNames[(size_t)ttype].c_str(), actual);
+  raise_type_mismatch(outer_struct, field_sym, TTypeName((size_t)ttype).c_str(),
+                      actual);
 }
 
 static void raise_type_mismatch(VALUE outer_struct, VALUE field_sym,
@@ -359,8 +359,8 @@ VALUE ThriftSerializer::readStruct(VALUE klass) {
       raise_exc_with_struct_and_field_names(
           SparsamTypeMismatchError,
           rb_sprintf("Mismatched type (definition: %s, found: %s)",
-                     TTypeNames[fieldBegin.ftype].c_str(),
-                     TTypeNames[typeId].c_str()),
+                     TTypeName(fieldBegin.ftype).c_str(),
+                     TTypeName(typeId).c_str()),
           klass, fieldInfo->symName);
     }
 
