@@ -489,6 +489,23 @@ describe 'Sparsam' do
       end
     end
 
+    it 'handles recursive structs' do
+      recursive_struct = RecursiveStruct.new
+      recursive_struct.id = 1
+      recursive_struct.self_struct = RecursiveStruct.new
+      recursive_struct.self_struct.id = 2
+      recursive_struct.self_list = [RecursiveStruct.new]
+      recursive_struct.self_list[0].id = 3
+
+      data = recursive_struct.serialize
+
+      new_recursive = Sparsam::Deserializer.deserialize(RecursiveStruct, data)
+
+      new_recursive.id.should == 1
+      new_recursive.self_struct.id.should == 2
+      new_recursive.self_list[0].id.should == 3
+    end
+
     it 'handles structs with modified eigenclasses' do
       nested_struct = US.new
 

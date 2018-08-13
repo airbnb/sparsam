@@ -82,6 +82,12 @@ struct EveryType {
   15: optional UN a_union
 }
 
+struct RecursiveStruct {
+  1: optional i64 id
+  2: optional RecursiveStruct self_struct
+  3: optional list<RecursiveStruct> self_list
+}
+
 exception SimpleException {
   1: optional string message
 }
