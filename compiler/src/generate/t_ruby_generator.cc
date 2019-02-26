@@ -809,14 +809,14 @@ void t_ruby_generator::generate_field_annotations(t_ruby_ofstream& out, t_struct
     int key = (*f_iter)->get_key();
     string name = (*f_iter)->get_name();
 
-    out.indent() << "'" << (*f_iter)->get_name() << "' => {" << endl;
+    out.indent() << "" << (*f_iter)->get_key() << " => {" << endl;
 
-    out.indent_up()
+    out.indent_up();
     map<string, string>::const_iterator it;
     for (it=ann.begin(); it!=ann.end(); ++it) {
       out.indent() << "'" << it->first << "' => '" << it->second << "'," << endl;
     }
-    out.indent_down()
+    out.indent_down();
 
     out.indent() << "}," << endl;
   }
