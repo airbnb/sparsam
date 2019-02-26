@@ -81,14 +81,14 @@ class t_ruby_generator : public t_oop_generator {
     void generate_field_constants(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_field_constructors(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_field_defns(t_ruby_ofstream& out, t_struct* tstruct);
-    void generate_field_annotations(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_schema_annotations(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_field_accessors(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_field_data(t_ruby_ofstream& out,
         t_type* field_type,
         const std::string& field_name,
         t_const_value* field_value,
-        bool optional);
+        bool optional,
+        std::map<string, string> annotations);
     void generate_writer(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_reader(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_serialize_map_element(t_ruby_ofstream& out, t_map* tmap);
@@ -428,7 +428,6 @@ void t_ruby_generator::generate_rb_struct(
   // These are now handled by meta programming in ruby
   //generate_initialize(out, tstruct);
   generate_field_defns(out, tstruct);
-  generate_field_annotations(out, tstruct);
   generate_schema_annotations(out, tstruct);
   //generate_field_constants(out, tstruct);
   //generate_field_accessors(out, tstruct);
@@ -785,40 +784,10 @@ void t_ruby_generator::generate_schema_annotations(t_ruby_ofstream& out, t_struc
   std::map<string, string> ann = tstruct->annotations_;
   std::map<string, string>::const_iterator it;
 
-  out.indent() << "SCHEMA_ANNOTATIONS = {" << endl;
+  out.indent() << "ANNOTATIONS = {" << endl;
   out.indent_up();
   for (it = ann.begin(); it != ann.end(); ++it) {
     out.indent() << "'" << it->first << "' => '" << it->second << "'," << endl;
-  }
-  out.indent_down();
-  out.indent() << "}" << endl << endl;
-}
-
-void t_ruby_generator::generate_field_annotations(t_ruby_ofstream& out, t_struct* tstruct) {
-  const vector<t_field*>& fields = tstruct->get_members();
-  vector<t_field*>::const_iterator f_iter;
-
-  out.indent() << "FIELD_ANNOTATIONS = {" << endl;
-  out.indent_up();
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    map<string, string> ann = (*f_iter)->annotations_;
-    if (ann.size() == 0) {
-      continue;
-    }
-
-    int key = (*f_iter)->get_key();
-    string name = (*f_iter)->get_name();
-
-    out.indent() << "" << (*f_iter)->get_key() << " => {" << endl;
-
-    out.indent_up();
-    map<string, string>::const_iterator it;
-    for (it=ann.begin(); it!=ann.end(); ++it) {
-      out.indent() << "'" << it->first << "' => '" << it->second << "'," << endl;
-    }
-    out.indent_down();
-
-    out.indent() << "}," << endl;
   }
   out.indent_down();
   out.indent() << "}" << endl << endl;
@@ -844,7 +813,8 @@ void t_ruby_generator::generate_field_defns(t_ruby_ofstream& out, t_struct* tstr
                         (*f_iter)->get_type(),
                         (*f_iter)->get_name(),
                         (*f_iter)->get_value(),
-                        (*f_iter)->get_req() == t_field::T_OPTIONAL);
+                        (*f_iter)->get_req() == t_field::T_OPTIONAL,
+                        (*f_iter)->annotations_);
   }
   out.indent_down();
   out << endl;
@@ -856,52 +826,79 @@ void t_ruby_generator::generate_field_data(
     t_type* field_type,
     const std::string& field_name = "",
     t_const_value* field_value = NULL,
-    bool optional = false) {
+    bool optional = false,
+    std::map<string, string> annotations = std::map<string, string>()) {
   field_type = get_true_type(field_type);
 
   // Begin this field's defn
-  out << "{:type => " << type_to_enum(field_type);
+  out << "{" << endl;
+  out.indent_up();
+
+  out.indent() << ":type => " << type_to_enum(field_type) << "," << endl;
 
   if (!field_name.empty()) {
-    out << ", :name => '" << field_name << "'";
+    out.indent() << ":name => '" << field_name << "'," << endl;
   }
 
   if (field_value != NULL) {
-    out << ", :default => ";
+    out.indent() << ":default => ";
     render_const_value(out, field_type, field_value);
+    out << "," << endl;
   }
 
   if (!field_type->is_base_type()) {
     if (field_type->is_struct() || field_type->is_xception()) {
-      out << ", :class => " << full_type_name((t_struct*)field_type);
+      out.indent() << ":class => " << full_type_name((t_struct*)field_type);
+      out << "," << endl;
     } else if (field_type->is_list()) {
-      out << ", :element => ";
+      out << ":element => ";
       generate_field_data(out, ((t_list*)field_type)->get_elem_type());
+      out << "," << endl;
     } else if (field_type->is_map()) {
-      out << ", :key => ";
+      out << ":key => ";
       generate_field_data(out, ((t_map*)field_type)->get_key_type());
-      out << ", :value => ";
+      out << "," << endl;
+      out << ":value => ";
       generate_field_data(out, ((t_map*)field_type)->get_val_type());
+      out << "," << endl;
     } else if (field_type->is_set()) {
-      out << ", :element => ";
+      out << ":element => ";
       generate_field_data(out, ((t_set*)field_type)->get_elem_type());
+      out << "," << endl;
     }
   } else {
     if (((t_base_type*)field_type)->is_binary()) {
-      out << ", :binary => true";
+      out << ":binary => true";
+      out << "," << endl;
     }
   }
 
   if (optional) {
-    out << ", :optional => true";
+    out.indent() << ":optional => true";
+    out << "," << endl;
   }
 
   if (field_type->is_enum()) {
-    out << ", :enum_class => " << full_type_name(field_type);
+    out.indent() << ":enum_class => " << full_type_name(field_type);
+    out.indent() << "," << endl;
+  }
+
+  if (annotations.size() > 0) {
+    out.indent() << ":annotations => {" << endl;
+    out.indent_up();
+
+    map<string, string>::const_iterator it;
+    for (it=annotations.begin(); it!=annotations.end(); ++it) {
+      out.indent() << "'" << it->first << "' => '" << it->second << "'," << endl;
+    }
+
+    out.indent_down();
+    out.indent() << "}," << endl;
   }
 
   // End of this field's defn
-  out << "}";
+  out.indent_down();
+  out.indent() << "}";
 }
 
 void t_ruby_generator::begin_namespace(t_ruby_ofstream& out, vector<std::string> modules) {
