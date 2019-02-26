@@ -81,6 +81,8 @@ class t_ruby_generator : public t_oop_generator {
     void generate_field_constants(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_field_constructors(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_field_defns(t_ruby_ofstream& out, t_struct* tstruct);
+    void generate_field_annotations(t_ruby_ofstream& out, t_struct* tstruct);
+    void generate_schema_annotations(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_field_accessors(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_field_data(t_ruby_ofstream& out,
         t_type* field_type,
@@ -426,6 +428,8 @@ void t_ruby_generator::generate_rb_struct(
   // These are now handled by meta programming in ruby
   //generate_initialize(out, tstruct);
   generate_field_defns(out, tstruct);
+  generate_field_annotations(out, tstruct);
+  generate_schema_annotations(out, tstruct);
   //generate_field_constants(out, tstruct);
   //generate_field_accessors(out, tstruct);
   //generate_reader(out, tstruct);
@@ -775,6 +779,47 @@ void t_ruby_generator::generate_writer(t_ruby_ofstream& out, t_struct* tstruct) 
   out.indent() << "sparsam.write_StructEnd()" << endl;
   out.indent_down();
   out.indent() << "end" << endl << endl;
+}
+
+void t_ruby_generator::generate_schema_annotations(t_ruby_ofstream& out, t_struct* tstruct) {
+  std::map<string, string> ann = tstruct->annotations_;
+  std::map<string, string>::const_iterator it;
+
+  out.indent() << "SCHEMA_ANNOTATIONS = {" << endl;
+  out.indent_up();
+  for (it = ann.begin(); it != ann.end(); ++it) {
+    out.indent() << "'" << it->first << "' => '" << it->second << "'," << endl;
+  }
+  out.indent_down();
+  out.indent() << "}" << endl << endl;
+}
+
+void t_ruby_generator::generate_field_annotations(t_ruby_ofstream& out, t_struct* tstruct) {
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+
+  out.indent() << "FIELD_ANNOTATIONS = {" << endl;
+  out.indent_up();
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    map<string, string> ann = (*f_iter)->annotations_;
+    if (ann.size() == 0) {
+      continue;
+    }
+
+    int key = (*f_iter)->get_key();
+    string name = (*f_iter)->get_name();
+
+    out.indent() << "'" << (*f_iter)->get_name() << "' => {" << endl;
+
+    map<string, string>::const_iterator it;
+    for (it=ann.begin(); it!=ann.end(); ++it) {
+      out.indent() << "  '" << it->first << "' => '" << it->second << "'," << endl;
+    }
+
+    out.indent() << "}," << endl;
+  }
+  out.indent_down();
+  out.indent() << "}" << endl << endl;
 }
 
 void t_ruby_generator::generate_field_defns(t_ruby_ofstream& out, t_struct* tstruct) {
