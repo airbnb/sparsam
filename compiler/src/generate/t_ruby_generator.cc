@@ -88,7 +88,7 @@ class t_ruby_generator : public t_oop_generator {
         const std::string& field_name,
         t_const_value* field_value,
         bool optional,
-        std::map<string, string> annotations);
+        std::map<string, string>* annotations);
     void generate_writer(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_reader(t_ruby_ofstream& out, t_struct* tstruct);
     void generate_serialize_map_element(t_ruby_ofstream& out, t_map* tmap);
@@ -781,12 +781,11 @@ void t_ruby_generator::generate_writer(t_ruby_ofstream& out, t_struct* tstruct) 
 }
 
 void t_ruby_generator::generate_schema_annotations(t_ruby_ofstream& out, t_struct* tstruct) {
-  std::map<string, string> ann = tstruct->annotations_;
   std::map<string, string>::const_iterator it;
 
   out.indent() << "ANNOTATIONS = {" << endl;
   out.indent_up();
-  for (it = ann.begin(); it != ann.end(); ++it) {
+  for (it = tstruct->annotations_.begin(); it != tstruct->annotations_.end(); ++it) {
     out.indent() << "'" << it->first << "' => '" << it->second << "'," << endl;
   }
   out.indent_down();
@@ -814,7 +813,7 @@ void t_ruby_generator::generate_field_defns(t_ruby_ofstream& out, t_struct* tstr
                         (*f_iter)->get_name(),
                         (*f_iter)->get_value(),
                         (*f_iter)->get_req() == t_field::T_OPTIONAL,
-                        (*f_iter)->annotations_);
+                        &(*f_iter)->annotations_);
   }
   out.indent_down();
   out << endl;
@@ -827,7 +826,7 @@ void t_ruby_generator::generate_field_data(
     const std::string& field_name = "",
     t_const_value* field_value = NULL,
     bool optional = false,
-    std::map<string, string> annotations = std::map<string, string>()) {
+    std::map<string, string>* annotations = NULL) {
   field_type = get_true_type(field_type);
 
   // Begin this field's defn
@@ -883,12 +882,12 @@ void t_ruby_generator::generate_field_data(
     out.indent() << "," << endl;
   }
 
-  if (annotations.size() > 0) {
+  if (annotations != NULL) {
     out.indent() << ":annotations => {" << endl;
     out.indent_up();
 
     map<string, string>::const_iterator it;
-    for (it=annotations.begin(); it!=annotations.end(); ++it) {
+    for (it = annotations->begin(); it != annotations->end(); ++it) {
       out.indent() << "'" << it->first << "' => '" << it->second << "'," << endl;
     }
 
