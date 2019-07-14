@@ -12,10 +12,7 @@ Gem::Specification.new do |s|
   s.license = 'Apache 2.0'
   s.extensions = ['ext/extconf.rb']
 
-  s.has_rdoc      = true
   s.rdoc_options  = %w(--line-numbers --inline-source --title Thrift --main README)
-
-  s.rubyforge_project = 'thrift'
 
   s.files = Dir.glob("{lib,spec,ext}/**/*.{c,h,rb,cpp}")
   s.test_files = Dir.glob("{test,spec,benchmark}/**/*")
