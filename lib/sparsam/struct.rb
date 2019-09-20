@@ -16,6 +16,8 @@ module Sparsam
         reader = name_to_accessors(info[:name]).reader
         return false unless send(reader) == other.send(reader)
       end
+
+      true
     end
     alias_method :eql?, :==
   end
