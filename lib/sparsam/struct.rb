@@ -18,5 +18,9 @@ module Sparsam
       end
     end
     alias_method :eql?, :==
+
+    def hash
+      to_h.hash
+    end
   end
 end

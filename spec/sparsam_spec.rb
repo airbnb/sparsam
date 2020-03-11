@@ -31,6 +31,12 @@ describe 'Sparsam' do
       subdata.id_s.should == "id_s default"
     end
 
+    it "respects equality of Sets" do
+      us1 = US.new
+      us2 = US.new
+      expect(Set[us1]).to eq(Set[us2])
+    end
+
     it "can serialize structs" do
       data = SS.new
       data.id_i32 = 10
