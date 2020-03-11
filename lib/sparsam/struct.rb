@@ -20,7 +20,9 @@ module Sparsam
     alias_method :eql?, :==
 
     def hash
-      to_h.hash
+      struct_fields.map do |fid, data|
+        data.hash
+      end.hash
     end
   end
 end
