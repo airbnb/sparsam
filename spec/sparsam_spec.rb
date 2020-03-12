@@ -25,16 +25,22 @@ serialized_binary = "\b\x00\x01\x00\x00\x00\n\v\x00\x02\x00\x00\x00\x10woohoo bl
                     "\x00\x00\x00\x03two\f\x00\b\b\x00\x01\x00\x00\x03\xE8\x00\x00"
 
 describe 'Sparsam' do
+  describe Sparsam::Struct do
+    it "respects equality of Sets" do
+      us1 = US.new
+      us2 = US.new
+
+      Set[us1].should == Set[us2]
+      us1.should == us2
+      [us1].should == [us2]
+      { us1 => true }.should == { us2 => true }
+    end
+  end
+
   describe Sparsam::Serializer do
     it "respect default values" do
       subdata = US.new
       subdata.id_s.should == "id_s default"
-    end
-
-    it "respects equality of Sets" do
-      us1 = US.new
-      us2 = US.new
-      expect(Set[us1]).to eq(Set[us2])
     end
 
     it "can serialize structs" do
