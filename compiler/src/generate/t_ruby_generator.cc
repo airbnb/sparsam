@@ -257,6 +257,18 @@ void t_ruby_generator::generate_enum(t_enum* tenum) {
   }
   f_types_ << "}" << endl;
 
+  // Create a hash mapping names (as strings) to their values to prevent needing to use const_get
+  // or const_defined? to find the value for a given string
+  f_types_.indent() << "INVERTED_VALUE_MAP = {";
+  for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
+    // Populate the hash
+    int value = (*c_iter)->get_value();
+    if (c_iter != constants.begin())
+      f_types_ << ", ";
+    f_types_ << "\"" << capitalize((*c_iter)->get_name()) << "\" => " << value;
+  }
+  f_types_ << "}" << endl;
+
   // Create a set with valid values for this enum
   f_types_.indent() << "VALID_VALUES = Set.new([";
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
