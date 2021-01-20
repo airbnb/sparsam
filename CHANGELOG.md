@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.8
+
+- Generate `INVERTED_VALUE_MAP` (map from string to int value) constant inside generated enum modules
+
+## 0.2.7
+
+- Generate annotations for fields and structures
+
 ## 0.2.6
 
 - Include additional information in type mismatch errors
