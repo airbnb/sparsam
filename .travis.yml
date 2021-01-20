@@ -27,8 +27,11 @@ rvm:
   - 1.9.3
   - 2.1.8
   - 2.2.1
-  - 2.3.0
-  - 2.4.0
+  - 2.3
+  - 2.4
+  - 2.5
+  - 2.6
+  - 2.7
 
 script:
   # Please add to Rakefile instead of this section.
@@ -39,13 +42,13 @@ addons:
   apt:
     packages:
       - automake
-      - bison 
-      - flex 
-      - g++ 
-      - git 
-      - libboost1.55-all-dev 
-      - libevent-dev 
-      - libssl-dev 
-      - libtool 
-      - make 
+      - bison
+      - flex
+      - g++
+      - git
+      - libboost1.55-all-dev
+      - libevent-dev
+      - libssl-dev
+      - libtool
+      - make
       - pkg-config
