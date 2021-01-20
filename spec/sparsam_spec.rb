@@ -546,4 +546,76 @@ describe 'Sparsam' do
       end
     end
   end
+
+  describe 'generated enum types' do
+    let(:enum_module) { Magic }
+
+    it 'includes thrift constants as top level module constants' do
+      enum_module.const_defined?(:Black).should == true
+      enum_module.const_defined?(:White).should == true
+      enum_module.const_defined?(:Red).should == true
+      enum_module.const_defined?(:Blue).should == true
+      enum_module.const_defined?(:Green).should == true
+
+      enum_module.const_get(:Black).should == 0
+      enum_module.const_get(:White).should == 1
+      enum_module.const_get(:Red).should == 2
+      enum_module.const_get(:Blue).should == 3
+      enum_module.const_get(:Green).should == 4
+    end
+
+    it 'contains a VALUE_MAP constant that maps from int value to string' do
+      enum_module.const_defined?(:VALUE_MAP).should == true
+
+      value_map = enum_module.const_get(:VALUE_MAP)
+
+      value_map.should eql({
+        0 => 'Black',
+        1 => 'White',
+        2 => 'Red',
+        3 => 'Blue',
+        4 => 'Green',
+      })
+
+      value_map[enum_module.const_get(:Black)].should == 'Black'
+      value_map[enum_module.const_get(:White)].should == 'White'
+      value_map[enum_module.const_get(:Red)].should == 'Red'
+      value_map[enum_module.const_get(:Blue)].should == 'Blue'
+      value_map[enum_module.const_get(:Green)].should == 'Green'
+    end
+
+    it 'contains an INVERTED_VALUE_MAP constant that maps from name to int value' do
+      enum_module.const_defined?(:INVERTED_VALUE_MAP).should == true
+
+      inverted_value_map = enum_module.const_get(:INVERTED_VALUE_MAP)
+
+      inverted_value_map.should eql({
+        'Black' => 0,
+        'White' => 1,
+        'Red' => 2,
+        'Blue' => 3,
+        'Green' => 4,
+      })
+
+      inverted_value_map['Black'].should == enum_module.const_get(:Black)
+      inverted_value_map['White'].should == enum_module.const_get(:White)
+      inverted_value_map['Red'].should == enum_module.const_get(:Red)
+      inverted_value_map['Blue'].should == enum_module.const_get(:Blue)
+      inverted_value_map['Green'].should == enum_module.const_get(:Green)
+    end
+
+    it 'contains a VALID_VALUES constant that is a set of all enum values' do
+      enum_module.const_defined?(:VALID_VALUES).should == true
+
+      valid_values = enum_module.const_get(:VALID_VALUES)
+
+      valid_values.should be_a(Set)
+      valid_values.should include(enum_module.const_get(:Black))
+      valid_values.should include(enum_module.const_get(:White))
+      valid_values.should include(enum_module.const_get(:Red))
+      valid_values.should include(enum_module.const_get(:Blue))
+      valid_values.should include(enum_module.const_get(:Green))
+      valid_values.length.should == 5
+    end
+  end
 end
