@@ -47,7 +47,7 @@ addons:
       - flex
       - g++
       - git
-      - libboost1.55-all-dev
+      - libboost-all-dev
       - libevent-dev
       - libssl-dev
       - libtool
