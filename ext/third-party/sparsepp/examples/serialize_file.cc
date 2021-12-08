@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <vector>
 #include <sparsepp/spp.h>
 
 using spp::sparse_hash_map;
@@ -43,6 +44,54 @@ public:
         new (value) string(buf, (size_t)size);
         delete[] buf;
         return true;
+    }
+
+    // serialize std::vector<T, A> to FILE
+    // -----------------------------------
+    template <class T, class A = std::allocator<T>>
+    bool operator()(FILE *fp, const std::vector<T, A>& value)
+    {
+        const size_t size = value.size();
+        if (!(*this)(fp, size))
+            return false;
+        for (size_t i=0; i<size; ++i)
+            if (!(*this)(fp, value[i]))
+                return false;
+        return true;
+    }
+
+    template <class T, class A = std::allocator<T>>
+    bool operator()(FILE *fp, std::vector<T, A>* value)
+    {
+        size_t size;
+        if (!(*this)(fp, &size))
+            return false;
+        new (value) std::vector<T, A>(size);
+        for (size_t i=0; i<size; ++i)
+            if (!(*this)(fp, &(*value)[i]))
+                return false;
+        return true;
+    }
+
+    // serialize spp::sparse_hash_map<K, V, H, E, A> to FILE
+    // -----------------------------------------------------
+    template <class K, class V, 
+              class H = spp::spp_hash<K>, 
+              class E = std::equal_to<K>, 
+              class A = SPP_DEFAULT_ALLOCATOR<std::pair<const K, V> > >
+    bool operator()(FILE *fp, const spp::sparse_hash_map<K, V, H, E, A>& value)
+    {
+        return const_cast<spp::sparse_hash_map<K, V, H, E, A> &>(value).serialize(*this, fp);
+    }
+
+    template <class K, class V, 
+              class H = spp::spp_hash<K>, 
+              class E = std::equal_to<K>, 
+              class A = SPP_DEFAULT_ALLOCATOR<std::pair<const K, V> > >
+    bool operator()(FILE *fp, spp::sparse_hash_map<K, V, H, E, A> *value)
+    {
+        new (value) spp::sparse_hash_map<K, V, H, E, A>();
+        return value->unserialize(*this, fp);
     }
 
     // serialize std::pair<const A, B> to FILE - needed for maps

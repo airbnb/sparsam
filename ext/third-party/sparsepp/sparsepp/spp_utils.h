@@ -80,11 +80,11 @@
         #define SPP_NO_CXX11_NOEXCEPT
     #endif
 #elif defined __clang__
-    #if __has_feature(cxx_noexcept)  // what to use here?
+    #if __has_feature(cxx_noexcept) || defined(SPP_CXX11) // define SPP_CXX11 if your compiler has <functional>
        #include <functional>
        #define SPP_HASH_CLASS  std::hash
     #else
-       #include <tr1/unordered_map>
+       #include <tr1/functional>
        #define SPP_HASH_CLASS std::tr1::hash
     #endif
 
@@ -119,6 +119,12 @@
     #define SPP_CONSTEXPR
 #else
     #define SPP_CONSTEXPR constexpr
+#endif
+
+#ifdef SPP_NO_CXX14_CONSTEXPR
+    #define SPP_CXX14_CONSTEXPR
+#else
+    #define SPP_CXX14_CONSTEXPR constexpr
 #endif
 
 #define SPP_INLINE
@@ -177,96 +183,107 @@ inline size_t spp_mix_32(uint32_t a)
     return static_cast<size_t>(a);
 }
 
-// Maybe we should do a more thorough scrambling as described in
+// More thorough scrambling as described in
 // https://gist.github.com/badboy/6267743
-// -------------------------------------------------------------
+// ----------------------------------------
 inline size_t spp_mix_64(uint64_t a)
 {
-    a = a ^ (a >> 4);
-    a = (a ^ 0xdeadbeef) + (a << 5);
-    a = a ^ (a >> 11);
-    return (size_t)a;
+    a = (~a) + (a << 21); // a = (a << 21) - a - 1;
+    a = a ^ (a >> 24);
+    a = (a + (a << 3)) + (a << 8); // a * 265
+    a = a ^ (a >> 14);
+    a = (a + (a << 2)) + (a << 4); // a * 21
+    a = a ^ (a >> 28);
+    a = a + (a << 31);
+    return static_cast<size_t>(a);
 }
 
+template<class ArgumentType, class ResultType>
+struct spp_unary_function
+{
+    typedef ArgumentType argument_type;
+    typedef ResultType result_type;
+};
+
 template <>
-struct spp_hash<bool> : public std::unary_function<bool, size_t>
+struct spp_hash<bool> : public spp_unary_function<bool, size_t>
 {
     SPP_INLINE size_t operator()(bool __v) const SPP_NOEXCEPT
     { return static_cast<size_t>(__v); }
 };
 
 template <>
-struct spp_hash<char> : public std::unary_function<char, size_t>
+struct spp_hash<char> : public spp_unary_function<char, size_t>
 {
     SPP_INLINE size_t operator()(char __v) const SPP_NOEXCEPT
     { return static_cast<size_t>(__v); }
 };
 
 template <>
-struct spp_hash<signed char> : public std::unary_function<signed char, size_t>
+struct spp_hash<signed char> : public spp_unary_function<signed char, size_t>
 {
     SPP_INLINE size_t operator()(signed char __v) const SPP_NOEXCEPT
     { return static_cast<size_t>(__v); }
 };
 
 template <>
-struct spp_hash<unsigned char> : public std::unary_function<unsigned char, size_t>
+struct spp_hash<unsigned char> : public spp_unary_function<unsigned char, size_t>
 {
     SPP_INLINE size_t operator()(unsigned char __v) const SPP_NOEXCEPT
     { return static_cast<size_t>(__v); }
 };
 
 template <>
-struct spp_hash<wchar_t> : public std::unary_function<wchar_t, size_t>
+struct spp_hash<wchar_t> : public spp_unary_function<wchar_t, size_t>
 {
     SPP_INLINE size_t operator()(wchar_t __v) const SPP_NOEXCEPT
     { return static_cast<size_t>(__v); }
 };
 
 template <>
-struct spp_hash<int16_t> : public std::unary_function<int16_t, size_t>
+struct spp_hash<int16_t> : public spp_unary_function<int16_t, size_t>
 {
     SPP_INLINE size_t operator()(int16_t __v) const SPP_NOEXCEPT
     { return spp_mix_32(static_cast<uint32_t>(__v)); }
 };
 
 template <>
-struct spp_hash<uint16_t> : public std::unary_function<uint16_t, size_t>
+struct spp_hash<uint16_t> : public spp_unary_function<uint16_t, size_t>
 {
     SPP_INLINE size_t operator()(uint16_t __v) const SPP_NOEXCEPT
     { return spp_mix_32(static_cast<uint32_t>(__v)); }
 };
 
 template <>
-struct spp_hash<int32_t> : public std::unary_function<int32_t, size_t>
+struct spp_hash<int32_t> : public spp_unary_function<int32_t, size_t>
 {
     SPP_INLINE size_t operator()(int32_t __v) const SPP_NOEXCEPT
     { return spp_mix_32(static_cast<uint32_t>(__v)); }
 };
 
 template <>
-struct spp_hash<uint32_t> : public std::unary_function<uint32_t, size_t>
+struct spp_hash<uint32_t> : public spp_unary_function<uint32_t, size_t>
 {
     SPP_INLINE size_t operator()(uint32_t __v) const SPP_NOEXCEPT
     { return spp_mix_32(static_cast<uint32_t>(__v)); }
 };
 
 template <>
-struct spp_hash<int64_t> : public std::unary_function<int64_t, size_t>
+struct spp_hash<int64_t> : public spp_unary_function<int64_t, size_t>
 {
     SPP_INLINE size_t operator()(int64_t __v) const SPP_NOEXCEPT
     { return spp_mix_64(static_cast<uint64_t>(__v)); }
 };
 
 template <>
-struct spp_hash<uint64_t> : public std::unary_function<uint64_t, size_t>
+struct spp_hash<uint64_t> : public spp_unary_function<uint64_t, size_t>
 {
     SPP_INLINE size_t operator()(uint64_t __v) const SPP_NOEXCEPT
     { return spp_mix_64(static_cast<uint64_t>(__v)); }
 };
 
 template <>
-struct spp_hash<float> : public std::unary_function<float, size_t>
+struct spp_hash<float> : public spp_unary_function<float, size_t>
 {
     SPP_INLINE size_t operator()(float __v) const SPP_NOEXCEPT
     {
@@ -277,7 +294,7 @@ struct spp_hash<float> : public std::unary_function<float, size_t>
 };
 
 template <>
-struct spp_hash<double> : public std::unary_function<double, size_t>
+struct spp_hash<double> : public spp_unary_function<double, size_t>
 {
     SPP_INLINE size_t operator()(double __v) const SPP_NOEXCEPT
     {
@@ -375,8 +392,15 @@ public:
     typedef size_t    size_type;
 
     libc_allocator() {}
-    libc_allocator(const libc_allocator &) {}
+    libc_allocator(const libc_allocator&) {}
+
+    template<class U>
+    libc_allocator(const libc_allocator<U> &) {}
+
     libc_allocator& operator=(const libc_allocator &) { return *this; }
+
+    template<class U>
+    libc_allocator& operator=(const libc_allocator<U> &) { return *this; }
 
 #ifndef SPP_NO_CXX11_RVALUE_REFERENCES    
     libc_allocator(libc_allocator &&) {}
@@ -385,7 +409,10 @@ public:
 
     pointer allocate(size_t n, const_pointer  /* unused */= 0) 
     {
-        return static_cast<pointer>(malloc(n * sizeof(T)));
+        pointer res = static_cast<pointer>(malloc(n * sizeof(T)));
+        if (!res)
+            throw std::bad_alloc();
+        return res;
     }
 
     void deallocate(pointer p, size_t /* unused */) 
@@ -395,7 +422,10 @@ public:
 
     pointer reallocate(pointer p, size_t new_size) 
     {
-        return static_cast<pointer>(realloc(p, new_size * sizeof(T)));
+        pointer res = static_cast<pointer>(realloc(p, new_size * sizeof(T)));
+        if (!res)
+            throw std::bad_alloc();
+        return res;
     }
 
     // extra API to match spp_allocator interface
