@@ -1,7 +1,7 @@
-extern "C" {
+// extern "C" {
+// }
 #include <ruby.h>
 #include <ruby/intern.h>
-}
 #include <ruby/encoding.h>
 #include <stdio.h>
 #include <thrift/protocol/TBinaryProtocol.h>
