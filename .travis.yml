@@ -44,6 +44,7 @@ addons:
     packages:
       - automake
       - bison
+      - build-essential
       - flex
       - g++
       - git

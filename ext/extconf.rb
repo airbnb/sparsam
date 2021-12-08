@@ -26,7 +26,7 @@ else
 end
 
 if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new('2.0.0')
-  $CPPFLAGS += $CXXFLAGS
+  $CPPFLAGS = " #{$CPPFLAGS} #{$CXXFLAGS} "
 end
 
 brew = find_executable('brew')
