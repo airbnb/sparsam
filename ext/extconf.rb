@@ -15,7 +15,6 @@ if defined?(append_cppflags)
   append_cppflags(ENV["CPPFLAGS"].split(/\s+/)) if !ENV["CPPFLAGS"].nil?
 else
   $CPPFLAGS = " #{$CPPFLAGS} -std=c++0x -O3 -ggdb3 -mtune=native -I./third-party/sparsepp "
-  $CPPFLAGS = " #{$CPPFLAGS} -std=c++11 -stdlib=libc++ "
   $CPPFLAGS = " #{$CPPFLAGS} #{ENV["CPPFLAGS"]} "
 end
 
