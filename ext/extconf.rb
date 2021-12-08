@@ -1,14 +1,29 @@
 require 'rubygems'
 require 'mkmf'
 
-append_cflags(['-fsigned-char', '-O3', '-ggdb3', '-mtune=native'])
-append_cppflags(['-std=c++0x', '-O3', '-ggdb3', '-mtune=native', '-I./third-party/sparsepp'])
-append_cppflags(['-std=c++11', '-stdlib=libc++'])
+if defined?(append_cflags)
+  append_cflags(['-fsigned-char', '-O3', '-ggdb3', '-mtune=native'])
+  append_cflags(ENV["CFLAGS"].split(/\s+/)) if !ENV["CFLAGS"].nil?
+else
+  $CFLAGS = " #{$CFLAGS} -fsigned-char -O3 -ggdb3 -mtune=native "
+  $CFLAGS = " #{$CFLAGS} #{ENV["CFLAGS"]} "
+end
 
-# Read CFLAGS, CPPFLAGS, LDFLAGS from ENV if provided
-append_cflags(ENV["CFLAGS"].split(/\s+/)) if !ENV["CFLAGS"].nil?
-append_cppflags(ENV["CPPFLAGS"].split(/\s+/)) if !ENV["CPPFLAGS"].nil?
-append_ldflags(ENV["LDFLAGS"].split(/\s+/)) if !ENV["LDFLAGS"].nil?
+if defined?(append_cppflags)
+  append_cppflags(['-std=c++0x', '-O3', '-ggdb3', '-mtune=native', '-I./third-party/sparsepp'])
+  append_cppflags(['-std=c++11', '-stdlib=libc++'])
+  append_cppflags(ENV["CPPFLAGS"].split(/\s+/)) if !ENV["CPPFLAGS"].nil?
+else
+  $CPPFLAGS = " #{$CPPFLAGS} -std=c++0x -O3 -ggdb3 -mtune=native -I./third-party/sparsepp "
+  $CPPFLAGS = " #{$CPPFLAGS} -std=c++11 -stdlib=libc++ "
+  $CPPFLAGS = " #{$CPPFLAGS} #{ENV["CPPFLAGS"]} "
+end
+
+if defined?(append_ldflags)
+  append_ldflags(ENV["LDFLAGS"].split(/\s+/)) if !ENV["LDFLAGS"].nil?
+else
+  $LDFLAGS = " #{$LDFLAGS} #{ENV["LDFLAGS"]} "
+end
 
 if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new('2.0.0')
   $CPPFLAGS += $CXXFLAGS
