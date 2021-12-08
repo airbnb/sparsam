@@ -1,8 +1,14 @@
 require 'rubygems'
 require 'mkmf'
 
-$CFLAGS = " -fsigned-char -O3 -ggdb3 -mtune=native "
-$CXXFLAGS = " -std=c++0x -O3 -ggdb3 -mtune=native -I./third-party/sparsepp "
+append_cflags(['-fsigned-char', '-O3', '-ggdb3', '-mtune=native'])
+append_cppflags(['-std=c++0x', '-O3', '-ggdb3', '-mtune=native', '-I./third-party/sparsepp'])
+
+# Read CFLAGS, CPPFLAGS, LDFLAGS from ENV if provided
+append_cflags(ENV["CFLAGS"].split(/\s+/)) if !ENV["CFLAGS"].nil?
+append_cppflags(ENV["CPPFLAGS"].split(/\s+/)) if !ENV["CPPFLAGS"].nil?
+append_ldflags(ENV["LDFLAGS"].split(/\s+/)) if !ENV["LDFLAGS"].nil?
+
 if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new('2.0.0')
   $CPPFLAGS += $CXXFLAGS
 end
