@@ -15,6 +15,17 @@
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
+
+# CMake issue #15943 for clang users targeting macOS
+# If you are using CMake and clang to target macOS there is a bug
+# that can cause the CMAKE_CXX_STANDARD feature to simply not work
+# (not add any compiler flags).
+# https://stackoverflow.com/a/31010221
+
+if (POLICY CMP0025)
+    cmake_policy(SET CMP0025 NEW)
+endif ()
+
 #
 # Windows has a different header
 if(MSVC)
