@@ -3,6 +3,7 @@ require 'mkmf'
 
 append_cflags(['-fsigned-char', '-O3', '-ggdb3', '-mtune=native'])
 append_cppflags(['-std=c++0x', '-O3', '-ggdb3', '-mtune=native', '-I./third-party/sparsepp'])
+append_cppflags(['-std=c++11', '-stdlib=libc++'])
 
 # Read CFLAGS, CPPFLAGS, LDFLAGS from ENV if provided
 append_cflags(ENV["CFLAGS"].split(/\s+/)) if !ENV["CFLAGS"].nil?
