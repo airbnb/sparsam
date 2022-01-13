@@ -1,6 +1,58 @@
 require 'rubygems'
 require 'mkmf'
 
+brew = find_executable('foobar')
+puts brew
+
+puts enable_config('homebrew', brew)
+
+exit 1
+
+header_dirs_ = [
+  ::RbConfig::CONFIG["includedir"],
+  "/usr/local/include",
+  "/usr/local/sparsam/include",
+  "/usr/local/thrift/include",
+  "/opt/local/include",
+  "/opt/sparsam/include",
+  "/opt/thrift/include",
+  "/opt/include",
+  "/opt/homebrew/include",
+  "/usr/include"
+]
+lib_dirs_ = [
+  ::RbConfig::CONFIG["libdir"],
+  "/usr/local/lib",
+  "/usr/local/lib64",
+  "/usr/local/sparsam/lib",
+  "/usr/local/thrift/lib",
+  "/opt/local/lib",
+  "/opt/sparsam/lib",
+  "/opt/thrift/lib",
+  "/opt/lib",
+  "/opt/homebrew/lib",
+  "/usr/lib",
+  "/usr/lib64"
+]
+
+begin
+  thrift_prefix = `brew --prefix airbnb/main/thrift`
+rescue
+  warn "could not find formula for airbnb/main/thrift - trying to proceed without it"
+else
+  header_dir = thrift_prefix + "/include"
+  lib_dir = thrift_prefix + "/lib"
+
+  puts "including header dir #{header_dir} and lib dir #{lib_dir}"
+
+  header_dirs_.unshift(header_dir)
+  lib_dirs_.unshift(lib_dir)
+end
+
+header_dirs_.delete_if { |path_| !::File.directory?(path_) }
+lib_dirs_.delete_if { |path_| !::File.directory?(path_) }
+dir_config("sparsam", header_dirs_, lib_dirs_)
+
 if defined?(append_cflags)
   append_cflags(['-fsigned-char', '-O3', '-ggdb3', '-mtune=native'])
   append_cflags(ENV["CFLAGS"].split(/\s+/)) if !ENV["CFLAGS"].nil?
@@ -28,6 +80,7 @@ if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new('2.0.0')
   $CPPFLAGS = " #{$CPPFLAGS} #{$CXXFLAGS} "
 end
 
+<<<<<<< HEAD
 brew = find_executable('brew')
 
 # Automatically use homebrew to discover thrift package if it is
@@ -77,6 +130,9 @@ if use_homebrew
     $stderr.puts 'Homebrew boost not found; assuming boost is in default search paths'
   end
 end
+=======
+$defs.push('-DSPP_CXX11')
+>>>>>>> e72e60b (wip)
 
 have_func("strlcpy", "string.h")
 

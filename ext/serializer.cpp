@@ -185,7 +185,7 @@ static inline long raise_type_mismatch_as_value(VALUE outer_struct,
   return 0;
 }
 
-static inline void Sparsam_Check_Type(VALUE x, int t, VALUE outer_struct,
+static inline void Sparsam_Check_Type(VALUE x, ruby_value_type t, VALUE outer_struct,
                                       VALUE field_sym) {
   if (!(RB_TYPE_P(x, t))) {
     raise_type_mismatch(outer_struct, field_sym, t, x);

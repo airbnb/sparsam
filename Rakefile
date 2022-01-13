@@ -35,7 +35,7 @@ end
 desc "Build the native library"
 task :build_ext => :'gen-ruby' do
   Dir.chdir(File.dirname('ext/extconf.rb')) do
-    unless sh "ruby #{File.basename('ext/extconf.rb')}"
+    unless sh "ruby #{File.basename('ext/extconf.rb')} --disable-homebrew"
       $stderr.puts "Failed to run extconf"
       break
     end
