@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.9
+
+- Improve extconf.rb to abort if it can't find thrift library
+- Improve extconf.rb support for dependencies installed via homebrew on osx
+
 ## 0.2.8
 
 - Generate `INVERTED_VALUE_MAP` (map from string to int value) constant inside generated enum modules
