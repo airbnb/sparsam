@@ -1,86 +1,49 @@
 require 'rubygems'
 require 'mkmf'
 
-brew = find_executable('foobar')
-puts brew
+# backport append_cflags, etc. when running against old versions of mkmf
 
-puts enable_config('homebrew', brew)
-
-exit 1
-
-header_dirs_ = [
-  ::RbConfig::CONFIG["includedir"],
-  "/usr/local/include",
-  "/usr/local/sparsam/include",
-  "/usr/local/thrift/include",
-  "/opt/local/include",
-  "/opt/sparsam/include",
-  "/opt/thrift/include",
-  "/opt/include",
-  "/opt/homebrew/include",
-  "/usr/include"
-]
-lib_dirs_ = [
-  ::RbConfig::CONFIG["libdir"],
-  "/usr/local/lib",
-  "/usr/local/lib64",
-  "/usr/local/sparsam/lib",
-  "/usr/local/thrift/lib",
-  "/opt/local/lib",
-  "/opt/sparsam/lib",
-  "/opt/thrift/lib",
-  "/opt/lib",
-  "/opt/homebrew/lib",
-  "/usr/lib",
-  "/usr/lib64"
-]
-
-begin
-  thrift_prefix = `brew --prefix airbnb/main/thrift`
-rescue
-  warn "could not find formula for airbnb/main/thrift - trying to proceed without it"
-else
-  header_dir = thrift_prefix + "/include"
-  lib_dir = thrift_prefix + "/lib"
-
-  puts "including header dir #{header_dir} and lib dir #{lib_dir}"
-
-  header_dirs_.unshift(header_dir)
-  lib_dirs_.unshift(lib_dir)
+unless defined?(append_cflags)
+  def append_cflags(*flags)
+    $CFLAGS = " #{$CFLAGS} #{flags.flatten.join(' ')} "
+  end
 end
 
-header_dirs_.delete_if { |path_| !::File.directory?(path_) }
-lib_dirs_.delete_if { |path_| !::File.directory?(path_) }
-dir_config("sparsam", header_dirs_, lib_dirs_)
-
-if defined?(append_cflags)
-  append_cflags(['-fsigned-char', '-O3', '-ggdb3', '-mtune=native'])
-  append_cflags(ENV["CFLAGS"].split(/\s+/)) if !ENV["CFLAGS"].nil?
-else
-  $CFLAGS = " #{$CFLAGS} -fsigned-char -O3 -ggdb3 -mtune=native "
-  $CFLAGS = " #{$CFLAGS} #{ENV["CFLAGS"]} "
+unless defined?(append_cxxflags)
+  def append_cxxflags(*flags)
+    $CXXFLAGS = " #{$CXXFLAGS} #{flags.flatten.join(' ')} "
+  end
 end
 
-if defined?(append_cppflags)
-  append_cppflags(['-std=c++0x', '-O3', '-ggdb3', '-mtune=native', '-I./third-party/sparsepp'])
-  append_cppflags(['-std=c++11', '-stdlib=libc++'])
-  append_cppflags(ENV["CPPFLAGS"].split(/\s+/)) if !ENV["CPPFLAGS"].nil?
-else
-  $CPPFLAGS = " #{$CPPFLAGS} -std=c++0x -O3 -ggdb3 -mtune=native -I./third-party/sparsepp "
-  $CPPFLAGS = " #{$CPPFLAGS} #{ENV["CPPFLAGS"]} "
+unless defined?(append_cppflags)
+  def append_cppflags(*flags)
+    $CPPFLAGS = " #{$CPPFLAGS} #{flags.flatten.join(' ')} "
+  end
 end
 
-if defined?(append_ldflags)
-  append_ldflags(ENV["LDFLAGS"].split(/\s+/)) if !ENV["LDFLAGS"].nil?
-else
-  $LDFLAGS = " #{$LDFLAGS} #{ENV["LDFLAGS"]} "
+unless defined?(append_ldflags)
+  def append_ldflags(*flags)
+    $LDFLAGS = " #{$LDFLAGS} #{flags.flatten.join(' ')} "
+  end
 end
+
+# Specify some build behaviors
+
+append_cflags(['-fsigned-char', '-O3', '-ggdb3', '-mtune=native'])
+
+append_cppflags(['-std=c++0x', '-O3', '-ggdb3', '-mtune=native', '-I./third-party/sparsepp'])
+append_cppflags(['-std=c++11', '-stdlib=libc++'])
+
+# Import any build flags passed in from ENV
+
+append_cflags(ENV["CFLAGS"].split(/\s+/)) if !ENV["CFLAGS"].nil?
+append_cppflags(ENV["CPPFLAGS"].split(/\s+/)) if !ENV["CPPFLAGS"].nil?
+append_ldflags(ENV["LDFLAGS"].split(/\s+/)) if !ENV["LDFLAGS"].nil?
 
 if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new('2.0.0')
-  $CPPFLAGS = " #{$CPPFLAGS} #{$CXXFLAGS} "
+  append_cppflags($CXXFLAGS.split(/\s+/)) if !$CXXFLAGS.nil?
 end
 
-<<<<<<< HEAD
 brew = find_executable('brew')
 
 # Automatically use homebrew to discover thrift package if it is
@@ -109,10 +72,10 @@ if use_homebrew
   end
 
   $stderr.puts "using Homebrew thrift at #{thrift_prefix}"
-  $CFLAGS << " -I#{thrift_prefix}/include"
-  $CXXFLAGS << " -I#{thrift_prefix}/include"
-  $CPPFLAGS << " -I#{thrift_prefix}/include"
-  $LDFLAGS << " -L#{thrift_prefix}/lib"
+  append_cflags(["-I#{thrift_prefix}/include"])
+  append_cppflags(["-I#{thrift_prefix}/include"])
+  append_cxxflags(["-I#{thrift_prefix}/include"])
+  append_ldflags(["-L#{thrift_prefix}/lib"])
 
   # Also add boost to the includes search path if it is installed.
   boost_package = with_config('homebrew-boost-package', 'boost')
@@ -123,16 +86,13 @@ if use_homebrew
 
   if File.exists?(boost_prefix)
     $stderr.puts("using Homebrew boost at #{boost_prefix}")
-    $CFLAGS << " -I#{boost_prefix}/include"
-    $CXXFLAGS << " -I#{boost_prefix}/include"
-    $CPPFLAGS << " -I#{boost_prefix}/include"
+    append_cflags(["-I#{boost_prefix}/include"])
+    append_cppflags(["-I#{boost_prefix}/include"])
+    append_cxxflags(["-I#{boost_prefix}/include"])
   else
     $stderr.puts 'Homebrew boost not found; assuming boost is in default search paths'
   end
 end
-=======
-$defs.push('-DSPP_CXX11')
->>>>>>> e72e60b (wip)
 
 have_func("strlcpy", "string.h")
 

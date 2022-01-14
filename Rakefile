@@ -2,6 +2,7 @@ require 'rubygems'
 require 'rake'
 require 'rake/clean'
 require 'rspec/core/rake_task'
+require 'bundler'
 
 THRIFT = './compiler/build/sparsam-gen'
 
@@ -35,10 +36,17 @@ end
 desc "Build the native library"
 task :build_ext => :'gen-ruby' do
   Dir.chdir(File.dirname('ext/extconf.rb')) do
-    unless sh "ruby #{File.basename('ext/extconf.rb')} --disable-homebrew"
+    begin
+      build_settings = Bundler.settings['build.sparsam']
+    rescue
+      build_settings = ""
+    end
+
+    unless sh "ruby #{File.basename('ext/extconf.rb')} -- #{build_settings}"
       $stderr.puts "Failed to run extconf"
       break
     end
+
     unless sh "make"
       $stderr.puts "make failed"
       break
