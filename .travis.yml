@@ -12,7 +12,7 @@ env:
     - CC="ccache gcc"
     - CXX="ccache g++"
     - THRIFT_SHA256SUM="2289d02de6e8db04cbbabb921aeb62bfe3098c4c83f36eec6c31194301efa10b  thrift-0.10.0.tar.gz"
-    - THRIFT_URL="http://mirror.reverse.net/pub/apache/thrift/0.10.0/thrift-0.10.0.tar.gz"
+    - THRIFT_URL="http://archive.apache.org/dist/thrift/0.10.0/thrift-0.10.0.tar.gz"
     - THRIFT_FILE="thrift-0.10.0.tar.gz"
     - THRIFT_DIR="thrift-0.10.0"
 
@@ -24,7 +24,6 @@ before_install:
   - export CPATH="$HOME/thrift/$THRIFT_DIR/lib/cpp/src:$HOME/thrift/$THRIFT_DIR:$CPATH"
 
 rvm:
-  - 1.9.3
   - 2.1.8
   - 2.2.1
   - 2.3

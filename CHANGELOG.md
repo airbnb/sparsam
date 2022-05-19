@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.10
+
+- Remove `Sparsam_Check_Type` and replace it with `SPARSAM_CHECK_TYPE` to fix compilation building with Ruby 3.*
+
 ## 0.2.9
 
 - Improve extconf.rb to abort if it can't find thrift library
