@@ -27,6 +27,11 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rake', '< 11.0'
 
   # specify versions with 1.9 support
-  s.add_development_dependency 'rubocop', '0.41.2'
-  s.add_development_dependency 'rubocop-rspec', '1.5.0'
+  if RUBY_VERSION =~ /^1\.9/
+    s.add_development_dependency 'rubocop', '0.41.2'
+    s.add_development_dependency 'rubocop-rspec', '1.5.0'
+  else
+    s.add_development_dependency 'rubocop'
+    s.add_development_dependency 'rubocop-rspec'
+  end
 end
