@@ -1,7 +1,5 @@
-extern "C" {
 #include <ruby.h>
 #include <ruby/intern.h>
-}
 #include <ruby/encoding.h>
 #include <stdio.h>
 #include <thrift/protocol/TBinaryProtocol.h>
@@ -50,6 +48,8 @@ VALUE SetClass;
 
 KlassFieldsCache klassCache;  // consider the memory leaked.
 std::unordered_set<VALUE> unions;
+
+#define SPARSAM_CHECK_TYPE(x, t, outer_struct, field_sym) if (!(RB_TYPE_P(x, t))) { raise_type_mismatch(outer_struct, field_sym, t, x); }
 
 void *serializer_create() { return (void *)(new ThriftSerializer()); }
 
@@ -185,12 +185,6 @@ static inline long raise_type_mismatch_as_value(VALUE outer_struct,
   return 0;
 }
 
-static inline void Sparsam_Check_Type(VALUE x, int t, VALUE outer_struct,
-                                      VALUE field_sym) {
-  if (!(RB_TYPE_P(x, t))) {
-    raise_type_mismatch(outer_struct, field_sym, t, x);
-  }
-}
 
 static inline VALUE make_ruby_bool(bool val) { return val ? Qtrue : Qfalse; }
 
@@ -513,7 +507,7 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
     HANDLE_TYPE(BYTE, Byte, CONVERT_FIXNUM(byte_convert, protocol::T_BYTE))
 
     case protocol::T_STRING: {
-      Sparsam_Check_Type(actual, T_STRING, outer_struct, field_sym);
+      SPARSAM_CHECK_TYPE(actual, T_STRING, outer_struct, field_sym);
 
       string data = string(StringValuePtr(actual), RSTRING_LEN(actual));
       if (field_info->isBinaryString) {
@@ -525,7 +519,7 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
     }
 
     case protocol::T_LIST: {
-      Sparsam_Check_Type(actual, T_ARRAY, outer_struct, field_sym);
+      SPARSAM_CHECK_TYPE(actual, T_ARRAY, outer_struct, field_sym);
 
       long length = RARRAY_LEN(actual);
       TType elem = field_info->elementType->ftype;
@@ -556,7 +550,7 @@ void ThriftSerializer::writeAny(TType ttype, FieldInfo *field_info,
     }
 
     case protocol::T_MAP: {
-      Sparsam_Check_Type(actual, T_HASH, outer_struct, field_sym);
+      SPARSAM_CHECK_TYPE(actual, T_HASH, outer_struct, field_sym);
 
       TType keyTType = field_info->keyType->ftype,
             valueTType = field_info->elementType->ftype;
