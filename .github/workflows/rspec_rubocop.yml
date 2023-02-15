@@ -8,6 +8,15 @@ on: [pull_request, push]
 permissions:
   contents: read
 
+env:
+  CC: ccache gcc
+  CXX: ccache g++
+  THRIFT_SHA256SUM: 2289d02de6e8db04cbbabb921aeb62bfe3098c4c83f36eec6c31194301efa10b  thrift-0.10.0.tar.gz
+  THRIFT_URL: http://archive.apache.org/dist/thrift/0.10.0/thrift-0.10.0.tar.gz
+  THRIFT_FILE: thrift-0.10.0.tar.gz
+  THRIFT_DIR: thrift-0.10.0
+
+
 jobs:
   test:
     runs-on: ubuntu-20.04
@@ -47,6 +56,13 @@ jobs:
         ruby-version: ${{ matrix.ruby-version }}
         bundler: ${{ matrix.bundler-version }}
         bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+
+    - name: Build thrift
+      run: |
+        bash ./travis-build-thrift.sh
+        export LIBRARY_PATH="$HOME/thrift/$THRIFT_DIR/lib:$LIBRARY_PATH"
+        export LD_LIBRARY_PATH="$HOME/thrift/$THRIFT_DIR/lib:$LD_LIBRARY_PATH"
+        export CPATH="$HOME/thrift/$THRIFT_DIR/lib/cpp/src:$HOME/thrift/$THRIFT_DIR:$CPATH"
 
     - name: Run rspec
       run: bundle exec rspec
