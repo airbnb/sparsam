@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         include: # use bundler 2.3 for ruby versions < 2.6 (https://bundler.io/compatibility.html)
