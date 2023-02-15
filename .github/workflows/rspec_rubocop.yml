@@ -34,7 +34,7 @@ jobs:
           flex \
           g++ \
           git \
-          libboost1.55-all-dev \
+          libboost1.58-all-dev \
           libevent-dev \
           libssl-dev \
           libtool \
