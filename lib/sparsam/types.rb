@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+
 require 'set'
 
 module Sparsam

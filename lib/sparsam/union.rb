@@ -1,11 +1,14 @@
 # -*- coding: UTF-8 -*-
+
 require 'sparsam/base_type'
 
 module Sparsam
   class Union
     include ::Sparsam::BaseType
 
+    # rubocop:disable Airbnb/OptArgParameters
     def initialize(name = nil, value = nil)
+      # rubocop:enable Airbnb/OptArgParameters
       if name
         if name.is_a? Hash
           if name.size > 1
