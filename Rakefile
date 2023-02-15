@@ -6,6 +6,8 @@ require 'rspec/core/rake_task'
 THRIFT = './compiler/build/sparsam-gen'.freeze
 
 task :default => [:gem]
+
+desc 'Run specs'
 task :spec => [:'gen-ruby', :build_ext, :realspec]
 
 RSpec::Core::RakeTask.new(:realspec) do |t|
@@ -26,6 +28,7 @@ end
 desc 'Compile the .thrift files for the specs'
 task :'gen-ruby' => [THRIFT, :'gen-ruby:spec']
 namespace :'gen-ruby' do
+  desc 'Run the thrift ruby code generator for specs'
   task :spec do
     dir = File.dirname(__FILE__) + '/spec'
     sh THRIFT, '-o', dir, "#{dir}/user.thrift"
@@ -54,7 +57,7 @@ end
 #   sh 'make', '-C', File.dirname(__FILE__) + "/../../test/rb", "check"
 # end
 
-desc 'Builds the thrift gem'
+desc 'Build the thrift gem'
 task :gem => [:spec, :build_ext] do
   unless sh 'gem', 'build', 'sparsam.gemspec'
     warn "Failed to build thrift gem"
