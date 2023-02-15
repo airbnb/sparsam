@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+
 require 'sparsam/base_type'
 require 'sparsam/base_struct'
 
