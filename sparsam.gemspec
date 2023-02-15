@@ -28,4 +28,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rake', '< 11.0'
 
   s.add_development_dependency 'rubocop-airbnb'
+  s.add_development_dependency 'rubocop-rake'
 end
