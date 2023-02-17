@@ -1,0 +1,70 @@
+# This workflow will download a prebuilt Ruby version, install dependencies and run tests with Rake
+# For more information see: https://github.com/marketplace/actions/setup-ruby-jruby-and-truffleruby
+
+name: Ruby
+
+on: [pull_request, push]
+
+permissions:
+  contents: read
+
+env:
+  CC: ccache gcc
+  CXX: ccache g++
+  THRIFT_SHA256SUM: 2289d02de6e8db04cbbabb921aeb62bfe3098c4c83f36eec6c31194301efa10b  thrift-0.10.0.tar.gz
+  THRIFT_URL: http://archive.apache.org/dist/thrift/0.10.0/thrift-0.10.0.tar.gz
+  THRIFT_FILE: thrift-0.10.0.tar.gz
+  THRIFT_DIR: thrift-0.10.0
+
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include: # use bundler 2.3 for ruby versions < 2.6 (https://bundler.io/compatibility.html)
+        - ruby-version: 2.5
+          bundler-version: 2.3
+        - ruby-version: 2.6
+          bundler-version: latest
+        - ruby-version: 2.7
+          bundler-version: latest
+        # - ruby-version: 3.0
+        #   bundler-version: latest
+        # - ruby-version: 3.1
+        #   bundler-version: latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: |
+        sudo apt-get install -y \
+          automake \
+          bison \
+          flex \
+          g++ \
+          git \
+          libboost-all-dev \
+          libevent-dev \
+          libssl-dev \
+          libtool \
+          make \
+          pkg-config \
+          ccache
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@ee2113536afb7f793eed4ce60e8d3b26db912da4 # v1.127.0
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+        bundler: ${{ matrix.bundler-version }}
+        bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+
+    - name: Build thrift
+      run: |
+        bash ./travis-build-thrift.sh
+        echo "LIBRARY_PATH=$HOME/thrift/$THRIFT_DIR/lib:$LIBRARY_PATH" >> $GITHUB_ENV
+        echo "LIBRARY_PATH=$HOME/thrift/$THRIFT_DIR/lib:$LIBRARY_PATH" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=$HOME/thrift/$THRIFT_DIR/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+        echo "CPATH=$HOME/thrift/$THRIFT_DIR/lib/cpp/src:$HOME/thrift/$THRIFT_DIR:$CPATH" >> $GITHUB_ENV
+    - name: Run rspec
+      run: bundle exec rspec
+    - name: Run rubocop
+      run: bundle exec rubocop --config .rubocop.yml --fail-fast -d
