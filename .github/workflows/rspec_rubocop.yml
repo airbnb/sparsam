@@ -15,11 +15,14 @@ env:
   THRIFT_URL: http://archive.apache.org/dist/thrift/0.10.0/thrift-0.10.0.tar.gz
   THRIFT_FILE: thrift-0.10.0.tar.gz
   THRIFT_DIR: thrift-0.10.0
+  DEBIAN_FRONTEND: noninteractive # for apt to be noninteractive
+  ImageOS: ubuntu20
 
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
+    container: ubuntu:focal
     strategy:
       matrix:
         include: # use bundler 2.3 for ruby versions < 2.6 (https://bundler.io/compatibility.html)
@@ -37,7 +40,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: Install dependencies
       run: |
-        sudo apt-get install -y \
+        apt-get update
+        apt-get install -y \
           automake \
           bison \
           flex \
@@ -49,7 +53,9 @@ jobs:
           libtool \
           make \
           pkg-config \
-          ccache
+          cmake \
+          ccache \
+          wget \
     - name: Set up Ruby
       uses: ruby/setup-ruby@ee2113536afb7f793eed4ce60e8d3b26db912da4 # v1.127.0
       with:
