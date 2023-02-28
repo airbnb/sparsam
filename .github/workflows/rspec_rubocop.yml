@@ -67,7 +67,7 @@ jobs:
 
     - name: Build thrift
       run: |
-        bash ./travis-build-thrift.sh
+        bash ./ci-build-thrift.sh
         echo "LIBRARY_PATH=$HOME/thrift/$THRIFT_DIR/lib:$LIBRARY_PATH" >> $GITHUB_ENV
         echo "LIBRARY_PATH=$HOME/thrift/$THRIFT_DIR/lib:$LIBRARY_PATH" >> $GITHUB_ENV
         echo "LD_LIBRARY_PATH=$HOME/thrift/$THRIFT_DIR/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
