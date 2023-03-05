@@ -65,12 +65,16 @@ module Sparsam
       end
     end
 
+    # rubocop:disable Airbnb/OptArgParameters
     def serialize(prot = Sparsam::CompactProtocol)
+      # rubocop:enable Airbnb/OptArgParameters
       s = Sparsam::Serializer.new(prot, "")
       s.serialize(self.class, self)
     end
 
+    # rubocop:disable Airbnb/OptArgParameters
     def validate(mode = Sparsam::NORMAL)
+      # rubocop:enable Airbnb/OptArgParameters
       Sparsam.validate(self.class, self, mode)
     end
 

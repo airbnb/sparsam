@@ -1,16 +1,5 @@
-###########################
-# Configuration for rubocop
-# in .rubocop.yml
-# Most of these are disabling existing cops, primarily
-# due to a smattering of different styles and loose
-# guidlines for contributions.
-#
-# Any of these may be changed.
-
-##############
-# Global rules
-
 AllCops:
+  TargetRubyVersion: 2.5
   Exclude:
     - '.git/**/*'
     - 'spec/gen-ruby/**/*'
@@ -19,8 +8,6 @@ AllCops:
 Rails:
   Enabled: false
 
-# Inherit default rules first, and then override those rules with our violation
-# whiteelist.
-inherit_from:
-  - .rubocop_default.yml
-  - .rubocop_todo.yml
+require:
+  - rubocop-airbnb
+  - rubocop-rake

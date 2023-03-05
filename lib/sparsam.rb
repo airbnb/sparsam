@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+
 require 'sparsam_native'
 
 require 'sparsam/types'

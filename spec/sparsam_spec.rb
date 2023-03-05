@@ -72,10 +72,10 @@ describe 'Sparsam' do
       data.un_field.id_i32.should == 1000
       data.us_s.size.should == 3
       ids = Set.new([1, 2, 3])
-      data.us_s.each { |val|
+      data.us_s.each do |val|
         ids.delete(val.id_i32)
         val.id_s.should == "id_s default"
-      }
+      end
       ids.size.should == 0
     end
 
@@ -97,67 +97,67 @@ describe 'Sparsam' do
     it "will throw exceptions when strict validation received a non-conforming type" do
       data = EasilyInvalid.new
       data.tail = SS.new
-      expect {
+      expect do
         Sparsam.validate(NotSS, data, Sparsam::STRICT)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
 
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
 
       data = EasilyInvalid.new
       data.s_self = Set.new([EasilyInvalid.new, SS.new])
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
 
       data = EasilyInvalid.new
       data.l_self = [EasilyInvalid.new, SS.new]
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
 
       data = EasilyInvalid.new
       data.mappy1 = { SS.new => 123 }
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
 
       data = EasilyInvalid.new
       data.mappy2 = { 123 => SS.new }
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
 
       data = EasilyInvalid.new
       data.mappy3 = { SS.new => SS.new }
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
 
       data = EasilyInvalid.new
       data.mappy3 = { EasilyInvalid.new => SS.new }
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
 
       data = EasilyInvalid.new
       data.mappy3 = { SS.new => EasilyInvalid.new }
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
 
       data = EasilyInvalid.new
       data.mappy3 = { EasilyInvalid.new => EasilyInvalid.new, SS.new => EasilyInvalid.new }
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
 
       data = EasilyInvalid.new
       data.id_i32 = "I'm pretty sure this is not an I32 LOL"
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::STRICT)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
     end
 
     it "includes additional data in TypeMismatch errors" do
@@ -182,24 +182,24 @@ describe 'Sparsam' do
 
       data = EasilyInvalid.new
       data.sure = [{ Set.new([1]) => { 1 => Set.new([[{ EasilyInvalid.new => 123 }]]) } }]
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::RECURSIVE)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
     end
 
     it "will throw exceptions when recursive validation is passed wrong data" do
       data = EasilyInvalid.new
       data.required_stuff = MiniRequired.new
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::RECURSIVE)
-      }.to raise_error(Sparsam::MissingMandatory)
+      end.to raise_error(Sparsam::MissingMandatory)
 
       data = EasilyInvalid.new
       data.tail = EasilyInvalid.new
       data.tail.s_self = Set.new([SS.new])
-      expect {
+      expect do
         Sparsam.validate(EasilyInvalid, data, Sparsam::RECURSIVE)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
     end
 
     it "will throw exceptions when passed data that doesn't match type" do
@@ -266,9 +266,9 @@ describe 'Sparsam' do
     end
 
     it "will throw errors when given junk data" do
-      expect {
+      expect do
         Sparsam::Deserializer.deserialize(SS, "wolololololol")
-      }.to raise_error(Sparsam::Exception)
+      end.to raise_error(Sparsam::Exception)
     end
 
     it "will throw errors when deserializing data with incorrect types" do
@@ -277,9 +277,9 @@ describe 'Sparsam' do
       data = NotSS.new
       data.id_s = "I am not an INT"
       bad_type = data.serialize
-      expect {
+      expect do
         Sparsam::Deserializer.deserialize(SS, bad_type)
-      }.to raise_error(Sparsam::TypeMismatch)
+      end.to raise_error(Sparsam::TypeMismatch)
     end
 
     it "can deserialize objects with fields it doesn't know about" do
@@ -297,17 +297,17 @@ describe 'Sparsam' do
     end
 
     it 'only allows one field to be set in a union' do
-      expect {
+      expect do
         UN.new({ :id_i32 => 1000, :id_s => "woops" })
-      }.to raise_error(Sparsam::UnionException)
+      end.to raise_error(Sparsam::UnionException)
 
       d = UN.new({ :id_i32 => 1000 })
       d.id_s = "woops"
       d.id_s
 
-      expect {
+      expect do
         d.id_i32
-      }.to raise_error(Sparsam::UnionException)
+      end.to raise_error(Sparsam::UnionException)
 
       d.instance_variables.should eq([:@setfield, :@id_s])
     end
@@ -354,10 +354,10 @@ describe 'Sparsam' do
       data.un_field.id_i32.should == 1000
       data.us_s.size.should == 3
       ids = Set.new([1, 2, 3])
-      data.us_s.each { |val|
+      data.us_s.each do |val|
         ids.delete(val.id_i32)
         val.id_s.should == "id_s default"
-      }
+      end
       ids.size.should == 0
     end
 
@@ -372,9 +372,9 @@ describe 'Sparsam' do
 
     it "doesn't segfault on malformed data" do
       really_bad = "\x0f\x00\x05\x0b\x00\x00\x00\x01\x00\x00\x00\x03\x00"
-      expect {
+      expect do
         Sparsam::Deserializer.deserialize(SS, really_bad, Sparsam::BinaryProtocol)
-      }.to raise_error(Sparsam::Exception)
+      end.to raise_error(Sparsam::Exception)
     end
 
     it "handles all sorts of type issues without crashing" do
@@ -434,18 +434,18 @@ describe 'Sparsam' do
 
           # Validation doesn't do range checking, though serialization does
           unless val_type.to_s =~ /bigint/
-            expect {
+            expect do
               Sparsam.validate(s.class, s, Sparsam::STRICT)
-            }.to(
+            end.to(
               raise_error(Sparsam::TypeMismatch),
               "assigning #{field} : #{type} a value of " \
               "#{val.inspect} : #{val_type} did not raise TypeMismatch"
             )
           end
 
-          expect {
+          expect do
             s.serialize
-          }.to(
+          end.to(
             raise_error(Sparsam::TypeMismatch),
             "assigning #{field} : #{type} a value of " \
             "#{val.inspect} : #{val_type} did not raise TypeMismatch"
@@ -471,16 +471,16 @@ describe 'Sparsam' do
           [max_val, ~max_val].each do |val|
             s.send(:"#{field}=", val)
 
-            expect {
+            expect do
               s.serialize
-            }.not_to raise_error, "#{field} of #{size} bits unable to hold #{val}"
+            end.not_to raise_error, "#{field} of #{size} bits unable to hold #{val}"
           end
 
           [max_val + 1, ~(max_val + 1)].each do |val|
             s.send(:"#{field}=", val)
-            expect {
+            expect do
               s.serialize
-            }.to(
+            end.to(
               raise_error(RangeError),
               "#{field} of #{size} bits apparently able to hold value #{val} in defiance of nature"
             )
