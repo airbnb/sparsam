@@ -34,8 +34,8 @@ jobs:
           bundler-version: latest
         - ruby-version: '3.0'
           bundler-version: latest
-        # - ruby-version: 3.1
-        #   bundler-version: latest
+        - ruby-version: 3.1
+          bundler-version: latest
     steps:
     - uses: actions/checkout@v3
     - name: Install dependencies
