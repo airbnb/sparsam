@@ -181,6 +181,16 @@ bool g_return_failure = false;
 bool g_audit_fatal = true;
 
 /**
+ * STD set to keep track of files that are generated alredy
+ */
+set<std::string> generated_files;
+
+/**
+ * Mapping of program to scope which has already been populated by recursively parsing the includes of the program
+ */
+std::map<std::string, t_scope> program_to_scope;
+
+/**
  * Win32 doesn't have realpath, so use fallback implementation in that case,
  * otherwise this just calls through to realpath
  */
@@ -898,40 +908,49 @@ bool skip_utf8_bom(FILE* f) {
 void parse(t_program* program, t_program* parent_program) {
   // Get scope file path
   string path = program->get_path();
+  string parent_path = (parent_program != NULL) ? parent_program->get_path() : "null";
 
-  // Set current dir global, which is used in the include_file function
-  g_curdir = directory_name(path);
-  g_curpath = path;
+  std::map<std::string, t_scope>::iterator it = program_to_scope.find(path);
+  if (it != program_to_scope.end()) {
+    pverbose("Skipping recursion for parsed program %s\n", path.c_str());
+    *(program->scope()) = it->second;
+  } else {
+    // Set current dir global, which is used in the include_file function
+    g_curdir = directory_name(path);
+    g_curpath = path;
 
-  // Open the file
-  // skip UTF-8 BOM if there is one
-  yyin = fopen(path.c_str(), "r");
-  if (yyin == 0) {
-    failure("Could not open input file: \"%s\"", path.c_str());
-  }
-  if (skip_utf8_bom(yyin))
-    pverbose("Skipped UTF-8 BOM at %s\n", path.c_str());
-
-  // Create new scope and scan for includes
-  pverbose("Scanning %s for includes\n", path.c_str());
-  g_parse_mode = INCLUDES;
-  g_program = program;
-  g_scope = program->scope();
-  try {
-    yylineno = 1;
-    if (yyparse() != 0) {
-      failure("Parser error during include pass.");
+    // Open the file
+    // skip UTF-8 BOM if there is one
+    yyin = fopen(path.c_str(), "r");
+    if (yyin == 0) {
+      failure("Could not open input file: \"%s\"", path.c_str());
     }
-  } catch (string x) {
-    failure(x.c_str());
-  }
-  fclose(yyin);
+    if (skip_utf8_bom(yyin))
+      pverbose("Skipped UTF-8 BOM at %s\n", path.c_str());
 
-  // Recursively parse all the include programs
-  vector<t_program*>& includes = program->get_includes();
-  vector<t_program*>::iterator iter;
-  for (iter = includes.begin(); iter != includes.end(); ++iter) {
-    parse(*iter, program);
+    // Create new scope and scan for includes
+    pverbose("Scanning includes from %s \n", path.c_str());
+    g_parse_mode = INCLUDES;
+    g_program = program;
+    g_scope = program->scope();
+    try {
+      yylineno = 1;
+      if (yyparse() != 0) {
+        failure("Parser error during include pass.");
+      }
+    } catch (string x) {
+      failure(x.c_str());
+    }
+    fclose(yyin);
+
+    // Recursively parse all the include programs
+    vector<t_program*>& includes = program->get_includes();
+    vector<t_program*>::iterator iter;
+    for (iter = includes.begin(); iter != includes.end(); ++iter) {
+      parse(*iter, program);
+    }
+
+    program_to_scope[path] = *(program->scope());
   }
 
   // reset program doctext status before parsing a new file
@@ -954,7 +973,7 @@ void parse(t_program* program, t_program* parent_program) {
   if (skip_utf8_bom(yyin))
     pverbose("Skipped UTF-8 BOM at %s\n", path.c_str());
 
-  pverbose("Parsing %s for types\n", path.c_str());
+  pverbose("Parsing types from %s with parent %s\n", path.c_str(), parent_path.c_str());
   yylineno = 1;
   try {
     if (yyparse() != 0) {
@@ -970,6 +989,12 @@ void parse(t_program* program, t_program* parent_program) {
  * Generate code
  */
 void generate(t_program* program, const vector<string>& generator_strings) {
+  set<std::string>::iterator it = generated_files.find(program->get_path());
+	if (it != generated_files.end()) {
+    pverbose("Skipping an already generated file %s\n", program->get_path().c_str());
+    return; // Return early if it is generated already
+  }
+
   // Oooohh, recursive code generation, hot!!
   if (gen_recurse) {
     const vector<t_program*>& includes = program->get_includes();
@@ -983,7 +1008,7 @@ void generate(t_program* program, const vector<string>& generator_strings) {
 
   // Generate code!
   try {
-    pverbose("Program: %s\n", program->get_path().c_str());
+    pverbose("Program to generate code: %s\n", program->get_path().c_str());
 
     // Compute fingerprints. - not anymore, we do it on the fly now
     // generate_all_fingerprints(program);
@@ -999,7 +1024,7 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       if (generator == NULL) {
         pwarning(1, "Unable to get a generator for \"%s\".\n", iter->c_str());
       } else {
-        pverbose("Generating \"%s\"\n", iter->c_str());
+        pverbose("Generating code with arg \"%s\" for %s\n", iter->c_str(), program->get_path().c_str());
         generator->generate_program();
         delete generator;
       }
@@ -1009,6 +1034,8 @@ void generate(t_program* program, const vector<string>& generator_strings) {
   } catch (const char* exc) {
     printf("Error: %s\n", exc);
   }
+  // Keep track of generated files
+  generated_files.insert(program->get_path());
 }
 
 void audit(t_program* new_program, t_program* old_program, string new_thrift_include_path, string old_thrift_include_path)
