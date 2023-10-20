@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.11
+
+- Port cycle breaking logic for Thrift includes over from Apache Thrift
+
 ## 0.2.10
 
 - Remove `Sparsam_Check_Type` and replace it with `SPARSAM_CHECK_TYPE` to fix compilation building with Ruby 3.*
