@@ -21,5 +21,11 @@ module Sparsam
       true
     end
     alias_method :eql?, :==
+
+    def hash
+      struct_fields.map do |fid, data|
+        data.hash
+      end.hash
+    end
   end
 end
