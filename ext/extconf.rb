@@ -23,7 +23,7 @@ if use_homebrew
 
   thrift_prefix = `#{brew} --prefix #{thrift_package}`.strip
 
-  unless File.exists?(thrift_prefix)
+  unless File.exist?(thrift_prefix)
     warn "#{thrift_prefix} does not exist"
     warn "To resolve, `brew install #{thrift_package}` or pass"
     warn '--with-homebrew-thrift-package=<package> to this build to specify'
@@ -47,7 +47,7 @@ if use_homebrew
 
   boost_prefix = `#{brew} --prefix #{boost_package}`.strip
 
-  if File.exists?(boost_prefix)
+  if File.exist?(boost_prefix)
     warn("using Homebrew boost at #{boost_prefix}")
     $CFLAGS << " -I#{boost_prefix}/include"
     $CXXFLAGS << " -I#{boost_prefix}/include"
