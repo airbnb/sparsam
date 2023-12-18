@@ -75,6 +75,6 @@ jobs:
         echo "LD_LIBRARY_PATH=$HOME/thrift/$THRIFT_DIR/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
         echo "CPATH=$HOME/thrift/$THRIFT_DIR/lib/cpp/src:$HOME/thrift/$THRIFT_DIR:$CPATH" >> $GITHUB_ENV
     - name: Run tests
-      run: bundle exec rake
+      run: bundle exec rake --trace
     - name: Run rubocop
       run: bundle exec rubocop --config .rubocop.yml --fail-fast -d
