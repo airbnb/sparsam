@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.12
+
+- Migrate the deprecated `File.exists?` to `File.exist?` to unblock usage in Ruby 3.2
+
 ## 0.2.11
 
 - Port cycle breaking logic for Thrift includes over from Apache Thrift
