@@ -3,6 +3,7 @@
 require 'rubygems'
 require 'rspec'
 require 'json'
+require 'set'
 
 RSpec.configure do |configuration|
   configuration.before(:each) do
