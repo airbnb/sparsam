@@ -28,7 +28,7 @@ describe 'Sparsam' do
   describe Sparsam::Serializer do
     it "respect default values" do
       subdata = US.new
-      subdata.id_s.should == "id_s default"
+      expect(subdata.id_s).to eq("id_s default")
     end
 
     it "can serialize structs" do
@@ -48,8 +48,8 @@ describe 'Sparsam' do
       data.mappy[2] = "two"
       data.un_field = UN.new({ :id_i32 => 1000 })
       result = data.serialize
-      Sparsam.validate(SS, data, Sparsam::RECURSIVE).should == true
-      result.force_encoding("BINARY").should == serialized.force_encoding("BINARY")
+      expect(Sparsam.validate(SS, data, Sparsam::RECURSIVE)).to eq(true)
+      expect(result.force_encoding("BINARY")).to eq(serialized.force_encoding("BINARY"))
     end
 
     it "can handle utf-8 strings" do
@@ -57,41 +57,41 @@ describe 'Sparsam' do
       data.id_s = "中国电信"
       result = data.serialize
       data2 = Sparsam::Deserializer.deserialize(SS, result)
-      data2.id_s.encoding.should == data.id_s.encoding
-      data2.id_s.should == data.id_s
+      expect(data2.id_s.encoding).to eq(data.id_s.encoding)
+      expect(data2.id_s).to eq(data.id_s)
     end
 
     it "can deserialize structs" do
       data = Sparsam::Deserializer.deserialize(SS, serialized)
-      data.id_i32.should == 10
-      data.id_s.should == "woohoo blackbird"
-      data.mappy[1].should == "one"
-      data.mappy[2].should == "two"
-      data.us_i.id_i32.should == 100
-      data.us_i.id_s.should == "subdata!"
-      data.un_field.id_i32.should == 1000
-      data.us_s.size.should == 3
+      expect(data.id_i32).to eq(10)
+      expect(data.id_s).to eq("woohoo blackbird")
+      expect(data.mappy[1]).to eq("one")
+      expect(data.mappy[2]).to eq("two")
+      expect(data.us_i.id_i32).to eq(100)
+      expect(data.us_i.id_s).to eq("subdata!")
+      expect(data.un_field.id_i32).to eq(1000)
+      expect(data.us_s.size).to eq(3)
       ids = Set.new([1, 2, 3])
       data.us_s.each do |val|
         ids.delete(val.id_i32)
-        val.id_s.should == "id_s default"
+        expect(val.id_s).to eq("id_s default")
       end
-      ids.size.should == 0
+      expect(ids.size).to eq(0)
     end
 
     it "can deserialize unions" do
       data = UN.new({ :id_i32 => 1000 })
       result = data.serialize
       data2 = Sparsam::Deserializer.deserialize(UN, result)
-      Sparsam.validate(UN, data2, Sparsam::RECURSIVE).should == true
-      data2.id_i32.should == 1000
+      expect(Sparsam.validate(UN, data2, Sparsam::RECURSIVE)).to eq(true)
+      expect(data2.id_i32).to eq(1000)
     end
 
     it "can handle passing in initialization data" do
       init = { "id_i32" => 10, "id_s" => "woohoo blackbird" }
       data = SS.new(init)
-      data.id_i32.should == 10
-      data.id_s.should == "woohoo blackbird"
+      expect(data.id_i32).to eq(10)
+      expect(data.id_s).to eq("woohoo blackbird")
     end
 
     it "will throw exceptions when strict validation received a non-conforming type" do
@@ -171,14 +171,14 @@ describe 'Sparsam' do
         e = exception
       end
 
-      e.struct_name.should == EasilyInvalid.name
-      e.field_name.should == "id_i32"
+      expect(e.struct_name).to eq(EasilyInvalid.name)
+      expect(e.field_name).to eq("id_i32")
     end
 
     it "works with crazy thriftness" do
       data = EasilyInvalid.new
       data.sure = [{ Set.new([1]) => { 1 => Set.new([[{ EasilyInvalid.new => "sure" }]]) } }]
-      Sparsam.validate(EasilyInvalid, data, Sparsam::RECURSIVE).should == true
+      expect(Sparsam.validate(EasilyInvalid, data, Sparsam::RECURSIVE)).to eq(true)
 
       data = EasilyInvalid.new
       data.sure = [{ Set.new([1]) => { 1 => Set.new([[{ EasilyInvalid.new => 123 }]]) } }]
@@ -223,8 +223,8 @@ describe 'Sparsam' do
         e = exception
       end
 
-      e.struct_name.should == MiniRequired.name
-      e.field_name.should == "id_i32"
+      expect(e.struct_name).to eq(MiniRequired.name)
+      expect(e.field_name).to eq("id_i32")
     end
 
     it "includes additional information on serializing mismatched types" do
@@ -237,7 +237,7 @@ describe 'Sparsam' do
       rescue Sparsam::TypeMismatch => exception
         e = exception
       end
-      e.message.should include("T_I32", "String")
+      expect(e.message).to include("T_I32", "String")
 
       data = EveryType.new
       data.a_struct = EveryType.new
@@ -248,7 +248,7 @@ describe 'Sparsam' do
       rescue Sparsam::TypeMismatch => exception
         e = exception
       end
-      e.message.should include("US", "EveryType")
+      expect(e.message).to include("US", "EveryType")
     end
 
     it "includes additional information on deserializing mismatched types" do
@@ -262,7 +262,7 @@ describe 'Sparsam' do
       rescue Sparsam::TypeMismatch => exception
         e = exception
       end
-      e.message.should include("T_I32", "T_STRING")
+      expect(e.message).to include("T_I32", "T_STRING")
     end
 
     it "will throw errors when given junk data" do
@@ -291,8 +291,8 @@ describe 'Sparsam' do
       data.id_i32 = 100
       ser = data.serialize
       notss = Sparsam::Deserializer.deserialize(NotSS, ser)
-      notss.id_s.should == "This is ok"
-      notss.id_i32.should == 100
+      expect(notss.id_s).to eq("This is ok")
+      expect(notss.id_i32).to eq(100)
       Sparsam::Deserializer.deserialize(Nothing, ser)
     end
 
@@ -309,7 +309,7 @@ describe 'Sparsam' do
         d.id_i32
       end.to raise_error(Sparsam::UnionException)
 
-      d.instance_variables.should eq([:@setfield, :@id_s])
+      expect(d.instance_variables).to eq([:@setfield, :@id_s])
     end
 
     it 'handles empty arrays' do
@@ -318,8 +318,8 @@ describe 'Sparsam' do
       data.us_s = Set.new
       ser = data.serialize
       unser = Sparsam::Deserializer.deserialize(SS, ser)
-      unser.mappy.size.should == 0
-      unser.us_s.size.should == 0
+      expect(unser.mappy.size).to eq(0)
+      expect(unser.us_s.size).to eq(0)
     end
 
     it "can serialize structs with binary" do
@@ -339,26 +339,26 @@ describe 'Sparsam' do
       data.us_s.add(US.new({ "id_i32" => 3 }))
       data.un_field = UN.new({ :id_i32 => 1000 })
       result = data.serialize(Sparsam::BinaryProtocol)
-      result.force_encoding("BINARY").should == serialized_binary.force_encoding("BINARY")
+      expect(result.force_encoding("BINARY")).to eq(serialized_binary.force_encoding("BINARY"))
     end
 
     it "can deserialize structs with binary" do
       data = Sparsam::Deserializer.deserialize(SS, serialized_binary, Sparsam::BinaryProtocol)
-      data.id_i32.should == 10
-      data.id_s.should == "woohoo blackbird"
-      data.mappy[1].should == "one"
-      data.mappy[2].should == "two"
-      data.mappy.size.should == 2
-      data.us_i.id_i32.should == 100
-      data.us_i.id_s.should == "subdata!"
-      data.un_field.id_i32.should == 1000
-      data.us_s.size.should == 3
+      expect(data.id_i32).to eq(10)
+      expect(data.id_s).to eq("woohoo blackbird")
+      expect(data.mappy[1]).to eq("one")
+      expect(data.mappy[2]).to eq("two")
+      expect(data.mappy.size).to eq(2)
+      expect(data.us_i.id_i32).to eq(100)
+      expect(data.us_i.id_s).to eq("subdata!")
+      expect(data.un_field.id_i32).to eq(1000)
+      expect(data.us_s.size).to eq(3)
       ids = Set.new([1, 2, 3])
       data.us_s.each do |val|
         ids.delete(val.id_i32)
-        val.id_s.should == "id_s default"
+        expect(val.id_s).to eq("id_s default")
       end
-      ids.size.should == 0
+      expect(ids.size).to eq(0)
     end
 
     it "can handle nested collections like a boss" do
@@ -367,7 +367,7 @@ describe 'Sparsam' do
       data.troll[1] = { 2 => 3 }
       ser = data.serialize
       new_data = Sparsam::Deserializer.deserialize(SS, ser)
-      new_data.troll[1][2].should == 3
+      expect(new_data.troll[1][2]).to eq(3)
     end
 
     it "doesn't segfault on malformed data" do
@@ -501,9 +501,9 @@ describe 'Sparsam' do
 
       new_recursive = Sparsam::Deserializer.deserialize(RecursiveStruct, data)
 
-      new_recursive.id.should == 1
-      new_recursive.self_struct.id.should == 2
-      new_recursive.self_list[0].id.should == 3
+      expect(new_recursive.id).to eq(1)
+      expect(new_recursive.self_struct.id).to eq(2)
+      expect(new_recursive.self_list[0].id).to eq(3)
     end
 
     it 'handles structs with modified eigenclasses' do
@@ -528,7 +528,7 @@ describe 'Sparsam' do
       it 'creates exceptions that can be raised' do
         e = SimpleException.new(message: "Oops")
 
-        e.message.should eq("Oops")
+        expect(e.message).to eq("Oops")
 
         expect { raise e }.to raise_error(SimpleException, "Oops")
       end
@@ -540,7 +540,7 @@ describe 'Sparsam' do
 
         e2 = Sparsam::Deserializer.deserialize(SimpleException, data)
 
-        e2.message.should eq("Oops")
+        expect(e2.message).to eq("Oops")
 
         expect { raise e2 }.to raise_error(SimpleException, "Oops")
       end
@@ -551,25 +551,25 @@ describe 'Sparsam' do
     let(:enum_module) { Magic }
 
     it 'includes thrift constants as top level module constants' do
-      enum_module.const_defined?(:Black).should == true
-      enum_module.const_defined?(:White).should == true
-      enum_module.const_defined?(:Red).should == true
-      enum_module.const_defined?(:Blue).should == true
-      enum_module.const_defined?(:Green).should == true
+      expect(enum_module.const_defined?(:Black)).to eq(true)
+      expect(enum_module.const_defined?(:White)).to eq(true)
+      expect(enum_module.const_defined?(:Red)).to eq(true)
+      expect(enum_module.const_defined?(:Blue)).to eq(true)
+      expect(enum_module.const_defined?(:Green)).to eq(true)
 
-      enum_module.const_get(:Black).should == 0
-      enum_module.const_get(:White).should == 1
-      enum_module.const_get(:Red).should == 2
-      enum_module.const_get(:Blue).should == 3
-      enum_module.const_get(:Green).should == 4
+      expect(enum_module.const_get(:Black)).to eq(0)
+      expect(enum_module.const_get(:White)).to eq(1)
+      expect(enum_module.const_get(:Red)).to eq(2)
+      expect(enum_module.const_get(:Blue)).to eq(3)
+      expect(enum_module.const_get(:Green)).to eq(4)
     end
 
     it 'contains a VALUE_MAP constant that maps from int value to string' do
-      enum_module.const_defined?(:VALUE_MAP).should == true
+      expect(enum_module.const_defined?(:VALUE_MAP)).to eq(true)
 
       value_map = enum_module.const_get(:VALUE_MAP)
 
-      value_map.should eql({
+      expect(value_map).to eql({
         0 => 'Black',
         1 => 'White',
         2 => 'Red',
@@ -577,19 +577,19 @@ describe 'Sparsam' do
         4 => 'Green',
       })
 
-      value_map[enum_module.const_get(:Black)].should == 'Black'
-      value_map[enum_module.const_get(:White)].should == 'White'
-      value_map[enum_module.const_get(:Red)].should == 'Red'
-      value_map[enum_module.const_get(:Blue)].should == 'Blue'
-      value_map[enum_module.const_get(:Green)].should == 'Green'
+      expect(value_map[enum_module.const_get(:Black)]).to eq('Black')
+      expect(value_map[enum_module.const_get(:White)]).to eq('White')
+      expect(value_map[enum_module.const_get(:Red)]).to eq('Red')
+      expect(value_map[enum_module.const_get(:Blue)]).to eq('Blue')
+      expect(value_map[enum_module.const_get(:Green)]).to eq('Green')
     end
 
     it 'contains an INVERTED_VALUE_MAP constant that maps from name to int value' do
-      enum_module.const_defined?(:INVERTED_VALUE_MAP).should == true
+      expect(enum_module.const_defined?(:INVERTED_VALUE_MAP)).to eq(true)
 
       inverted_value_map = enum_module.const_get(:INVERTED_VALUE_MAP)
 
-      inverted_value_map.should eql({
+      expect(inverted_value_map).to eql({
         'Black' => 0,
         'White' => 1,
         'Red' => 2,
@@ -597,25 +597,25 @@ describe 'Sparsam' do
         'Green' => 4,
       })
 
-      inverted_value_map['Black'].should == enum_module.const_get(:Black)
-      inverted_value_map['White'].should == enum_module.const_get(:White)
-      inverted_value_map['Red'].should == enum_module.const_get(:Red)
-      inverted_value_map['Blue'].should == enum_module.const_get(:Blue)
-      inverted_value_map['Green'].should == enum_module.const_get(:Green)
+      expect(inverted_value_map['Black']).to eq(enum_module.const_get(:Black))
+      expect(inverted_value_map['White']).to eq(enum_module.const_get(:White))
+      expect(inverted_value_map['Red']).to eq(enum_module.const_get(:Red))
+      expect(inverted_value_map['Blue']).to eq(enum_module.const_get(:Blue))
+      expect(inverted_value_map['Green']).to eq(enum_module.const_get(:Green))
     end
 
     it 'contains a VALID_VALUES constant that is a set of all enum values' do
-      enum_module.const_defined?(:VALID_VALUES).should == true
+      expect(enum_module.const_defined?(:VALID_VALUES)).to eq(true)
 
       valid_values = enum_module.const_get(:VALID_VALUES)
 
-      valid_values.should be_a(Set)
-      valid_values.should include(enum_module.const_get(:Black))
-      valid_values.should include(enum_module.const_get(:White))
-      valid_values.should include(enum_module.const_get(:Red))
-      valid_values.should include(enum_module.const_get(:Blue))
-      valid_values.should include(enum_module.const_get(:Green))
-      valid_values.length.should == 5
+      expect(valid_values).to be_a(Set)
+      expect(valid_values).to include(enum_module.const_get(:Black))
+      expect(valid_values).to include(enum_module.const_get(:White))
+      expect(valid_values).to include(enum_module.const_get(:Red))
+      expect(valid_values).to include(enum_module.const_get(:Blue))
+      expect(valid_values).to include(enum_module.const_get(:Green))
+      expect(valid_values.length).to eq(5)
     end
   end
 end
