@@ -23,7 +23,7 @@ Gem::Specification.new do |s|
 
   s.require_paths = %w(lib ext)
 
-  s.add_development_dependency 'rspec', '~> 2.10.0'
+  s.add_development_dependency 'rspec'
   s.add_development_dependency "bundler"
   s.add_development_dependency 'rake'
 
