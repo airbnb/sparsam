@@ -2,7 +2,7 @@
 
 ## 0.2.12
 
-- Migrate the deprecated `File.exists` to `File.exist` to unblock usage in Ruby 3.2
+- Migrate the deprecated `File.exists?` to `File.exist?` to unblock usage in Ruby 3.2
 
 ## 0.2.11
 
